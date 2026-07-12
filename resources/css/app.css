@@ -1,0 +1,294 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+/* ==========================================================================
+   SIA · Sistema de diseño — Clínica Psicológica
+   Identidad: "Salvia & Arena cálida" — natural, terapéutico, sereno.
+   ========================================================================== */
+
+@theme {
+    /* Tipografía */
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Fraunces', 'Playfair Display', ui-serif, Georgia, serif;
+
+    /* --- Celeste (color primario / marca) --- */
+    --color-sage-50: #eff6fb;
+    --color-sage-100: #d8ebf6;
+    --color-sage-200: #b3d6ec;
+    --color-sage-300: #83bbdd;
+    --color-sage-400: #529bc8;
+    --color-sage-500: #3480ae;
+    --color-sage-600: #296692;
+    --color-sage-700: #245377;
+    --color-sage-800: #234563;
+    --color-sage-900: #213b54;
+    --color-sage-950: #142434;
+
+    /* --- Arena (acento cálido) --- */
+    --color-sand-50: #faf6f0;
+    --color-sand-100: #f3eadd;
+    --color-sand-200: #e7d5bf;
+    --color-sand-300: #d9be9c;
+    --color-sand-400: #c9a98c;
+    --color-sand-500: #bb9573;
+    --color-sand-600: #a67e5c;
+    --color-sand-700: #89664b;
+    --color-sand-800: #6f5340;
+    --color-sand-900: #5c4537;
+
+    /* --- Neutros cálidos (crema/piedra) --- */
+    --color-cream-50: #fcfbf8;
+    --color-cream-100: #f7f5f0;
+    --color-cream-200: #efece4;
+    --color-cream-300: #e3ded2;
+    --color-cream-400: #cfc8b8;
+
+    /* --- Tinta (texto) --- */
+    --color-ink-500: #64727d;
+    --color-ink-700: #414e58;
+    --color-ink-900: #24333d;
+
+    /* Sombras suaves */
+    --shadow-soft: 0 4px 20px -6px rgba(34, 51, 61, 0.10);
+    --shadow-calm: 0 12px 40px -12px rgba(34, 51, 61, 0.18);
+    --shadow-lift: 0 20px 50px -16px rgba(34, 51, 61, 0.24);
+}
+
+/* Dark mode vía clase (Tailwind v4) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-family: var(--font-sans);
+        background-color: #f7f5f0;
+        color: #2e3a33;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        @apply transition-colors duration-300;
+    }
+
+    .dark body {
+        background-color: #142434;
+        color: #d8ebf6;
+    }
+
+    ::selection {
+        background-color: #b3d6ec;
+        color: #213b54;
+    }
+}
+
+/* ==========================================================================
+   Componentes reutilizables
+   ========================================================================== */
+@layer components {
+
+    .font-serif {
+        font-family: var(--font-serif);
+    }
+
+    /* --- Superficies / tarjetas --- */
+    .surface {
+        @apply bg-white border border-cream-300 rounded-3xl;
+        box-shadow: var(--shadow-soft);
+    }
+
+    .dark .surface {
+        @apply bg-sage-900 border-sage-800;
+    }
+
+    .surface-hover {
+        transition: transform .35s cubic-bezier(.4, 0, .2, 1), box-shadow .35s cubic-bezier(.4, 0, .2, 1), border-color .35s;
+    }
+
+    .surface-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-calm);
+        @apply border-sage-300;
+    }
+
+    /* --- Botones --- */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap;
+    }
+
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap bg-sage-600 text-white px-7 py-3;
+        box-shadow: 0 10px 24px -8px rgba(41, 102, 146, 0.5);
+    }
+
+    .btn-primary:hover {
+        @apply bg-sage-700;
+        transform: translateY(-2px);
+        box-shadow: 0 16px 30px -10px rgba(41, 102, 146, 0.6);
+    }
+
+    .btn-accent {
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap text-white px-7 py-3;
+        background: linear-gradient(135deg, #c9a98c 0%, #a67e5c 100%);
+        box-shadow: 0 10px 24px -8px rgba(166, 126, 92, 0.5);
+    }
+
+    .btn-accent:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.04);
+    }
+
+    .btn-outline {
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap bg-transparent border border-sage-300 text-sage-700 px-7 py-3;
+    }
+
+    .btn-outline:hover {
+        @apply bg-sage-50 border-sage-500;
+    }
+
+    .dark .btn-outline {
+        @apply border-sage-700 text-sage-200;
+    }
+
+    .dark .btn-outline:hover {
+        @apply bg-sage-800;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap bg-transparent text-ink-700 px-5 py-2.5 hover:bg-cream-200;
+    }
+
+    /* --- Chips / etiquetas --- */
+    .chip {
+        @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide;
+    }
+
+    .chip-sage {
+        @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-sage-100 text-sage-700;
+    }
+
+    .chip-sand {
+        @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-sand-100 text-sand-700;
+    }
+
+    /* --- Inputs --- */
+    .field {
+        @apply w-full rounded-2xl border border-cream-300 bg-cream-50 px-4 py-3 text-ink-900
+        placeholder:text-ink-500/60 transition-all duration-200
+        focus:outline-none focus:border-sage-400 focus:bg-white;
+        box-shadow: 0 0 0 0 rgba(52, 128, 174, 0);
+    }
+
+    .field:focus {
+        box-shadow: 0 0 0 4px rgba(52, 128, 174, 0.14);
+    }
+
+    .dark .field {
+        @apply bg-sage-950 border-sage-800 text-cream-100;
+    }
+
+    .label {
+        @apply block text-sm font-semibold text-ink-700 mb-2;
+    }
+
+    .dark .label {
+        @apply text-sage-200;
+    }
+
+    /* --- Encabezado de sección --- */
+    .eyebrow {
+        @apply text-xs font-bold uppercase tracking-[0.25em] text-sage-600;
+    }
+
+    .section-divider {
+        @apply relative pb-4 mb-10 border-b border-cream-300;
+    }
+
+    .section-divider::after {
+        content: '';
+        @apply absolute left-0 -bottom-px h-0.5 w-14 bg-sage-500 rounded-full;
+    }
+
+    /* --- Fondo con textura orgánica --- */
+    .bg-organic {
+        background-color: #f7f5f0;
+        background-image:
+            radial-gradient(at 15% 15%, rgba(179, 214, 236, 0.40) 0px, transparent 45%),
+            radial-gradient(at 85% 20%, rgba(233, 213, 191, 0.30) 0px, transparent 45%),
+            radial-gradient(at 50% 95%, rgba(179, 214, 236, 0.28) 0px, transparent 50%);
+    }
+
+    .dark .bg-organic {
+        background-color: #142434;
+        background-image:
+            radial-gradient(at 15% 15%, rgba(36, 83, 119, 0.5) 0px, transparent 45%),
+            radial-gradient(at 85% 20%, rgba(35, 69, 99, 0.5) 0px, transparent 45%);
+    }
+
+    .bg-dots {
+        background-image: radial-gradient(rgba(131, 187, 221, 0.38) 1.4px, transparent 1.4px);
+        background-size: 28px 28px;
+    }
+
+    .dark .bg-dots {
+        background-image: radial-gradient(rgba(36, 83, 119, 0.5) 1.4px, transparent 1.4px);
+    }
+}
+
+@layer utilities {
+    [x-cloak] {
+        display: none !important;
+    }
+
+    /* ------------------------------------------------------------------
+       Legibilidad en modo oscuro.
+       Muchas vistas usan colores de texto oscuros (títulos con text-sage-900,
+       text-ink-900, etc.) sin una variante `dark:`. En modo oscuro esos textos
+       quedan invisibles. Aquí los aclaramos SOLO cuando el elemento no define
+       ya un color de texto para dark (no tiene ninguna clase `dark:text-...`).
+       Va en `utilities` (no en `base`) para ganar a las utilidades text-* de
+       Tailwind v4, que están en esta misma capa; el selector es más específico.
+       ------------------------------------------------------------------ */
+    .dark .text-sage-900:not([class*="dark:text"]),
+    .dark .text-sage-800:not([class*="dark:text"]),
+    .dark .text-ink-900:not([class*="dark:text"]) {
+        color: #eff6fb;
+    }
+
+    .dark .text-ink-700:not([class*="dark:text"]) {
+        color: #d8ebf6;
+    }
+
+    .dark .text-ink-600:not([class*="dark:text"]) {
+        color: #b3d6ec;
+    }
+
+    .dark .text-ink-500:not([class*="dark:text"]) {
+        color: #83bbdd;
+    }
+
+    /* Animaciones de revelado al hacer scroll */
+    .reveal {
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity .7s ease-out, transform .7s ease-out;
+    }
+
+    .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .animate-float {
+        animation: sia-float 6s ease-in-out infinite;
+    }
+
+    @keyframes sia-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-12px); }
+    }
+}
