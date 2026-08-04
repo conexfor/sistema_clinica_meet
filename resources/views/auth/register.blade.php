@@ -3,7 +3,11 @@
 @php $current = 'register'; $title = 'Reservar cita · Sia'; @endphp
 
 @section('content')
-<div class="relative min-h-[75vh] flex items-center justify-center py-16 px-4">
+<div class="relative min-h-[75vh] flex items-center justify-center py-16 px-4 overflow-hidden">
+    <!-- Orbes decorativos, muy sutiles -->
+    <div class="orb -top-16 -right-20 w-80 h-80 bg-sand-200/30"></div>
+    <div class="orb bottom-0 -left-20 w-72 h-72 bg-sage-300/30" style="animation-delay:-5s"></div>
+
     <div class="w-full max-w-[620px] relative z-10">
         <!-- Marca -->
         <div class="text-center mb-10">
@@ -13,13 +17,14 @@
                 </div>
             </div>
             <h2 class="font-serif text-4xl text-sage-900 dark:text-cream-100 mb-3">
-                Únete a <span class="italic text-sand-600">Sia</span>
+                Únete a <span class="italic text-gradient">Sia</span>
             </h2>
             <p class="text-ink-500 dark:text-sage-300">Tu camino hacia el bienestar comienza aquí.</p>
         </div>
 
         <!-- Tarjeta -->
-        <div class="surface p-8 sm:p-10">
+        <div class="surface relative overflow-hidden p-8 sm:p-10">
+            <span class="absolute top-0 left-0 right-0 h-1" style="background: linear-gradient(90deg, var(--color-sand-400), var(--color-sage-400));"></span>
             <form action="{{ route('register') }}" method="POST" class="space-y-6">
                 @csrf
 
@@ -54,7 +59,7 @@
                 </div>
                 @error('password') <p class="text-sand-700 text-xs font-semibold">{{ $message }}</p> @enderror
 
-                <button type="submit" class="btn-primary w-full py-4 text-base">
+                <button type="submit" class="btn-primary-gradient w-full py-4 text-base">
                     Crear mi cuenta
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </button>

@@ -12,8 +12,8 @@
 
 @theme {
     /* Tipografía */
-    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-    --font-serif: 'Fraunces', 'Playfair Display', ui-serif, Georgia, serif;
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'DM Serif Display', 'Playfair Display', ui-serif, Georgia, serif;
 
     /* --- Celeste (color primario / marca) --- */
     --color-sage-50: #eff6fb;
@@ -131,6 +131,19 @@
         box-shadow: 0 16px 30px -10px rgba(41, 102, 146, 0.6);
     }
 
+    /* Variante con gradiente del botón primario, para CTAs destacados puntuales */
+    .btn-primary-gradient {
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap text-white px-7 py-3;
+        background: linear-gradient(135deg, var(--color-sage-500) 0%, var(--color-sage-700) 100%);
+        box-shadow: 0 10px 24px -8px rgba(41, 102, 146, 0.5);
+    }
+
+    .btn-primary-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 30px -10px rgba(41, 102, 146, 0.6);
+        filter: brightness(1.05);
+    }
+
     .btn-accent {
         @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap text-white px-7 py-3;
         background: linear-gradient(135deg, #c9a98c 0%, #a67e5c 100%);
@@ -237,6 +250,116 @@
     .dark .bg-dots {
         background-image: radial-gradient(rgba(36, 83, 119, 0.5) 1.4px, transparent 1.4px);
     }
+
+    /* --- Fondo mesh premium (animado, deriva lenta) --- */
+    .bg-mesh {
+        background-color: #f7f5f0;
+        background-image:
+            radial-gradient(at 15% 20%, rgba(82, 155, 200, 0.32) 0px, transparent 50%),
+            radial-gradient(at 82% 8%, rgba(217, 190, 156, 0.32) 0px, transparent 48%),
+            radial-gradient(at 92% 78%, rgba(131, 187, 221, 0.28) 0px, transparent 50%),
+            radial-gradient(at 8% 88%, rgba(201, 169, 140, 0.24) 0px, transparent 50%);
+        background-size: 180% 180%;
+        animation: sia-mesh-drift 24s ease-in-out infinite;
+    }
+
+    .bg-mesh-dark {
+        background-color: #142434;
+        background-image:
+            radial-gradient(at 15% 20%, rgba(52, 128, 174, 0.28) 0px, transparent 50%),
+            radial-gradient(at 85% 15%, rgba(166, 126, 92, 0.16) 0px, transparent 48%),
+            radial-gradient(at 90% 85%, rgba(82, 155, 200, 0.20) 0px, transparent 50%);
+        background-size: 180% 180%;
+        animation: sia-mesh-drift 42s ease-in-out infinite reverse;
+    }
+
+    @keyframes sia-mesh-drift {
+        0%, 100% { background-position: 0% 0%; }
+        50% { background-position: 100% 100%; }
+    }
+
+    /* --- Glassmorphism --- */
+    .glass {
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(22px) saturate(160%);
+        -webkit-backdrop-filter: blur(22px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        box-shadow: 0 8px 32px -10px rgba(34, 51, 61, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    .glass-sm {
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(14px) saturate(150%);
+        -webkit-backdrop-filter: blur(14px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    .glass-dark {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(22px) saturate(160%);
+        -webkit-backdrop-filter: blur(22px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: 0 8px 32px -10px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .surface-glass {
+        background: rgba(255, 255, 255, 0.62);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        border-radius: 1.5rem;
+    }
+
+    /* --- Orbes decorativos flotantes (parallax + morph) --- */
+    .orb {
+        position: absolute;
+        border-radius: 9999px;
+        filter: blur(60px);
+        pointer-events: none;
+        will-change: transform;
+        animation: sia-orb-float 11s ease-in-out infinite;
+    }
+
+    @keyframes sia-orb-float {
+        0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+        50% { transform: translate3d(14px, -26px, 0) scale(1.07); }
+    }
+
+    /* --- Texto con gradiente --- */
+    .text-gradient {
+        background: linear-gradient(135deg, var(--color-sage-600), var(--color-sand-500));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    /* --- Brillo barrido (shimmer) al pasar el mouse sobre botones --- */
+    .btn-primary,
+    .btn-primary-gradient,
+    .btn-accent {
+        position: relative;
+        isolation: isolate;
+    }
+
+    .btn-primary::after,
+    .btn-primary-gradient::after,
+    .btn-accent::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .4) 50%, transparent 70%);
+        transform: translateX(-130%);
+        transition: transform .8s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .btn-primary:hover::after,
+    .btn-primary-gradient:hover::after,
+    .btn-accent:hover::after {
+        transform: translateX(130%);
+    }
+
 }
 
 @layer utilities {
@@ -290,5 +413,23 @@
     @keyframes sia-float {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-12px); }
+    }
+
+    .reveal-delay-1 { transition-delay: .12s; }
+    .reveal-delay-2 { transition-delay: .24s; }
+    .reveal-delay-3 { transition-delay: .36s; }
+    .reveal-delay-4 { transition-delay: .48s; }
+
+    [data-parallax] {
+        will-change: transform;
+    }
+
+    .animate-bounce-soft {
+        animation: sia-bounce-soft 2.2s ease-in-out infinite;
+    }
+
+    @keyframes sia-bounce-soft {
+        0%, 100% { transform: translateY(0); opacity: .6; }
+        50% { transform: translateY(8px); opacity: 1; }
     }
 }

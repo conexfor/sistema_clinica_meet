@@ -6,9 +6,14 @@
 <div class="max-w-4xl mx-auto pb-12">
 
     <!-- Encabezado -->
-    <div class="mb-8">
-        <h1 class="font-serif text-3xl text-sage-900 mb-1">Mi perfil</h1>
-        <p class="text-sm text-ink-500 font-medium">Revisa y actualiza tus datos personales y de acceso.</p>
+    <div class="flex items-center gap-4 mb-8">
+        <a href="{{ route('portal.index') }}" class="w-11 h-11 rounded-2xl bg-white dark:bg-sage-800 border border-cream-300 dark:border-sage-700 text-ink-500 flex items-center justify-center hover:bg-sage-50 dark:hover:bg-sage-700 transition-colors shadow-soft shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+            <h1 class="font-serif text-3xl text-sage-900 mb-1">Mi perfil</h1>
+            <p class="text-sm text-ink-500 font-medium">Revisa y actualiza tus datos personales y de acceso.</p>
+        </div>
     </div>
 
     @if($errors->any())
@@ -27,8 +32,9 @@
 
         <!-- Datos de la cuenta -->
         <div class="surface overflow-hidden">
-            <div class="p-8 md:p-10 text-white relative bg-gradient-to-br from-sage-700 to-sage-900">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-sand-300/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div class="p-8 md:p-10 text-white relative bg-gradient-to-br from-sage-700 to-sage-900 ring-1 ring-inset ring-white/10">
+                <div class="orb top-0 right-0 w-64 h-64 bg-sand-300/10 -translate-y-1/2 translate-x-1/2"></div>
+                <div class="orb bottom-0 left-0 w-40 h-40 bg-sage-400/10 -translate-x-1/3 translate-y-1/3" style="animation-delay:-4s"></div>
                 <div class="flex items-center gap-5 relative z-10">
                     <div class="w-20 h-20 rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center text-3xl font-bold shrink-0">
                         {{ strtoupper(substr($usuario->nombre ?? 'P', 0, 1)) }}

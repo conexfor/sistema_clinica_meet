@@ -3,7 +3,11 @@
 @php $current = 'login'; $title = 'Ingresar · Sia'; @endphp
 
 @section('content')
-<div class="relative min-h-[75vh] flex items-center justify-center py-16 px-4">
+<div class="relative min-h-[75vh] flex items-center justify-center py-16 px-4 overflow-hidden">
+    <!-- Orbes decorativos, muy sutiles -->
+    <div class="orb -top-16 -left-20 w-80 h-80 bg-sage-300/30"></div>
+    <div class="orb bottom-0 -right-20 w-72 h-72 bg-sand-200/30" style="animation-delay:-5s"></div>
+
     <div class="w-full max-w-[460px] relative z-10">
         <!-- Marca -->
         <div class="text-center mb-10">
@@ -13,13 +17,14 @@
                 </div>
             </div>
             <h2 class="font-serif text-4xl text-sage-900 dark:text-cream-100 mb-3">
-                Bienvenido <span class="italic text-sand-600">de nuevo</span>
+                Bienvenido <span class="italic text-gradient">de nuevo</span>
             </h2>
             <p class="text-ink-500 dark:text-sage-300">Nos alegra tenerte aquí otra vez.</p>
         </div>
 
         <!-- Tarjeta -->
-        <div class="surface p-8 sm:p-10">
+        <div class="surface relative overflow-hidden p-8 sm:p-10">
+            <span class="absolute top-0 left-0 right-0 h-1" style="background: linear-gradient(90deg, var(--color-sage-400), var(--color-sand-400));"></span>
             @if(session('error'))
             <div class="mb-8 bg-sand-50 border border-sand-300 text-sand-800 px-5 py-4 rounded-2xl text-sm font-medium flex items-center gap-3">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -47,7 +52,7 @@
                     <span class="ml-3 text-sm font-medium text-ink-600 dark:text-sage-300 group-hover:text-sage-600 transition-colors">Recordarme</span>
                 </label>
 
-                <button type="submit" class="btn-primary w-full py-4 text-base">
+                <button type="submit" class="btn-primary-gradient w-full py-4 text-base">
                     Iniciar sesión
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </button>

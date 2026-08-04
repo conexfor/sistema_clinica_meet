@@ -25,7 +25,12 @@
 
     <div class="space-y-5">
         @forelse($tickets as $ticket)
-            <div class="surface p-6">
+            @php
+                $accentMap = ['abierto' => 'var(--color-sand-400), var(--color-sand-600)', 'en_proceso' => 'var(--color-sage-300), var(--color-sage-500)', 'resuelto' => 'var(--color-sage-500), var(--color-sage-700)'];
+                $accent = $accentMap[$ticket->estado] ?? 'var(--color-cream-300), var(--color-cream-400)';
+            @endphp
+            <div class="surface relative overflow-hidden p-6">
+                <span class="absolute top-0 left-0 right-0 h-1" style="background: linear-gradient(90deg, {{ $accent }});"></span>
                 <div class="flex items-start justify-between gap-4 mb-3">
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 mb-1.5 flex-wrap">

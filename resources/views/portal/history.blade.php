@@ -31,7 +31,7 @@
             <div class="h-px bg-cream-300 dark:bg-sage-700 flex-1"></div>
         </h3>
 
-        <div class="relative space-y-10 before:content-[''] before:absolute before:left-[1.35rem] md:before:left-[1.85rem] before:top-2 before:bottom-2 before:w-0.5 before:bg-cream-300 dark:before:bg-sage-700">
+        <div class="relative space-y-10 before:content-[''] before:absolute before:left-[1.35rem] md:before:left-[1.85rem] before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-sage-400 before:via-cream-300 before:to-sand-300 dark:before:from-sage-500 dark:before:via-sage-700 dark:before:to-sage-700">
             @forelse($appointments as $appointment)
             @php
                 $esPasada = $appointment->end_at->lt(now());

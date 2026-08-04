@@ -14,7 +14,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..700&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,300..800;1,300..800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
@@ -25,7 +25,7 @@
 <body
     x-data="{ scrolled: false }"
     @scroll.window="scrolled = (window.pageYOffset > 40)"
-    class="bg-cream-100 text-ink-900 min-h-screen flex flex-col antialiased">
+    class="bg-mesh text-ink-900 min-h-screen flex flex-col antialiased">
 
     @include('partials.site-header', ['current' => $current ?? null])
 

@@ -1,6 +1,51 @@
 import './bootstrap';
 
 /**
+ * Parallax ligero basado en scroll + movimiento del mouse.
+ * Solo se activa si la página tiene elementos [data-parallax] (landing pages),
+ * así que no afecta al resto del panel. Respeta prefers-reduced-motion.
+ */
+(function () {
+    const scrollEls = document.querySelectorAll('[data-parallax]');
+    const mouseEls = document.querySelectorAll('[data-parallax-mouse]');
+    if (!scrollEls.length && !mouseEls.length) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return;
+
+    let ticking = false;
+
+    function updateScroll() {
+        const y = window.scrollY;
+        scrollEls.forEach(function (el) {
+            const speed = parseFloat(el.dataset.parallax) || 0.15;
+            el.style.transform = 'translate3d(0, ' + (y * speed) + 'px, 0)';
+        });
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', function () {
+        if (!ticking) {
+            window.requestAnimationFrame(updateScroll);
+            ticking = true;
+        }
+    }, { passive: true });
+
+    updateScroll();
+
+    if (mouseEls.length) {
+        window.addEventListener('mousemove', function (e) {
+            const cx = e.clientX / window.innerWidth - 0.5;
+            const cy = e.clientY / window.innerHeight - 0.5;
+            mouseEls.forEach(function (el) {
+                const strength = parseFloat(el.dataset.parallaxMouse) || 18;
+                el.style.transform = 'translate3d(' + (cx * strength) + 'px, ' + (cy * strength) + 'px, 0)';
+            });
+        }, { passive: true });
+    }
+})();
+
+/**
  * Guard global anti doble-envío.
  * Evita que un formulario se envíe varias veces por clicks repetidos o doble
  * Enter. Al primer submit válido, marca el formulario y deshabilita sus botones.

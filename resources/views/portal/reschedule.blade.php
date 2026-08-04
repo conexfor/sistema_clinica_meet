@@ -5,18 +5,18 @@
 @section('content')
 <div class="max-w-3xl mx-auto pb-16">
 
-    <a href="{{ route('portal.index') }}" class="inline-flex items-center gap-2 text-[11px] font-bold text-ink-500 uppercase tracking-widest hover:text-sage-600 transition-colors mb-6">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-        Volver a mi panel
-    </a>
-
-    <div class="mb-8">
-        <h1 class="font-serif text-3xl text-sage-900 mb-1">Solicitar cambio de horario</h1>
-        <p class="text-sm text-ink-500 font-medium">
-            Elige un nuevo horario disponible con
-            <span class="font-bold text-sage-700">Ps. {{ $cita->especialista->usuario->nombre }}</span>.
-            Tu especialista confirmará el cambio.
-        </p>
+    <div class="flex items-center gap-4 mb-8">
+        <a href="{{ route('portal.index') }}" class="w-11 h-11 rounded-2xl bg-white dark:bg-sage-800 border border-cream-300 dark:border-sage-700 text-ink-500 flex items-center justify-center hover:bg-sage-50 dark:hover:bg-sage-700 transition-colors shadow-soft shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+            <h1 class="font-serif text-3xl text-sage-900 mb-1">Solicitar cambio de horario</h1>
+            <p class="text-sm text-ink-500 font-medium">
+                Elige un nuevo horario disponible con
+                <span class="font-bold text-sage-700">Ps. {{ $cita->especialista->usuario->nombre }}</span>.
+                Tu especialista confirmará el cambio.
+            </p>
+        </div>
     </div>
 
     <!-- Cita actual -->
@@ -74,7 +74,7 @@
                                 <label class="cursor-pointer">
                                     <input type="radio" name="slot_id" value="{{ $slot['id'] }}" class="peer sr-only"
                                            x-on:change="selected = '{{ $slot['start'] }}'" required>
-                                    <div class="p-4 rounded-2xl border border-cream-300 bg-cream-100/50 text-center transition-all hover:border-sage-300 peer-checked:bg-sage-600 peer-checked:border-sage-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-sage-500 peer-focus-visible:ring-offset-2">
+                                    <div class="p-4 rounded-2xl border border-cream-300 bg-cream-100/50 text-center transition-all hover:border-sage-300 peer-checked:bg-gradient-to-br peer-checked:from-sage-500 peer-checked:to-sage-700 peer-checked:border-sage-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-sage-500 peer-focus-visible:ring-offset-2">
                                         <p class="text-sm font-bold text-ink-900 peer-checked:text-white">{{ $slot['display'] }}</p>
                                         <p class="text-[10px] font-semibold text-ink-500 peer-checked:text-sage-100 mt-0.5">{{ $slot['duration'] }} min</p>
                                     </div>

@@ -20,8 +20,9 @@
             @endphp
 
             <!-- Próxima sesión -->
-            <div class="lg:col-span-2 rounded-3xl p-8 shadow-calm relative overflow-hidden flex flex-col justify-between h-full bg-gradient-to-br from-sage-700 to-sage-900">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-sand-300/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div class="lg:col-span-2 rounded-3xl p-8 shadow-calm relative overflow-hidden flex flex-col justify-between h-full bg-gradient-to-br from-sage-700 to-sage-900 ring-1 ring-inset ring-white/10">
+                <div class="orb top-0 right-0 w-64 h-64 bg-sand-300/20 -translate-y-1/2 translate-x-1/2"></div>
+                <div class="orb bottom-0 left-0 w-48 h-48 bg-sage-400/15 -translate-x-1/3 translate-y-1/3" style="animation-delay:-4s"></div>
 
                 <div class="relative z-10 flex flex-col h-full justify-between">
                     <div class="flex items-center justify-between mb-8">
@@ -90,7 +91,7 @@
                     <div class="w-10 h-10 rounded-2xl bg-sage-100 text-sage-600 flex items-center justify-center mb-4">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
-                    <h3 class="font-serif text-4xl text-sage-900 mb-1">{{ $stats['kpis']['citas_asistidas'] ?? 0 }}</h3>
+                    <h3 class="font-serif text-4xl text-gradient mb-1">{{ $stats['kpis']['citas_asistidas'] ?? 0 }}</h3>
                     <p class="text-xs font-bold text-ink-500 uppercase tracking-widest">Sesiones completadas</p>
                 </div>
                 @php
@@ -103,7 +104,7 @@
                     <div class="w-10 h-10 rounded-2xl bg-sand-100 text-sand-600 flex items-center justify-center mb-4">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     </div>
-                    <h3 class="font-serif text-4xl text-sage-900 mb-1">{{ $proximasSesiones }}</h3>
+                    <h3 class="font-serif text-4xl text-gradient mb-1">{{ $proximasSesiones }}</h3>
                     <p class="text-xs font-bold text-ink-500 uppercase tracking-widest">Próximas sesiones</p>
                 </div>
             </div>
