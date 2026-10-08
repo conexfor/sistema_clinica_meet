@@ -22,9 +22,9 @@ class OccupancyReportService
 
     private const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-    public function getStats(string $period): array
+    public function getStats(string $period, ?string $startDate = null, ?string $endDate = null): array
     {
-        $p = ReportPeriod::make($period);
+        $p = ReportPeriod::make($period, $startDate, $endDate);
         $hours = range(self::HOUR_START, self::HOUR_END);
 
         // Matriz 7 (días) × N (horas) inicializada en 0.
@@ -51,10 +51,11 @@ class OccupancyReportService
             }
         }
 
-        // Presencial vs Virtual: conteo de citas por modalidad en el período.
-        $porModalidad = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+        // Presencial vs Virtual: conteo de sesiones válidas por modalidad en el período.
+        $porModalidad = Cita::whereIn('citas.estado', [Cita::STATUS_RESERVADA, Cita::STATUS_ATTENTION, Cita::STATUS_COMPLETED])
+            ->join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->whereBetween('disponibilidades.fecha', [$p->start, $p->end])
-            ->select('citas.modalidad_id', DB::raw('COUNT(*) as count'))
+            ->select('citas.modalidad_id', DB::raw('SUM(citas.cantidad_sesiones) as count'))
             ->groupBy('citas.modalidad_id')
             ->pluck('count', 'modalidad_id');
 

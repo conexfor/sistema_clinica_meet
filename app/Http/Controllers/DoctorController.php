@@ -47,6 +47,11 @@ class DoctorController extends Controller
         $especialista = $this->resolveEspecialista($request);
 
         $todaySessions = $this->especialistaService->getTodaySessions($especialista->id);
+        $todaySessionsCount = $this->especialistaService->countSessionsByDate($especialista->id, now()->toDateString(), [
+            Cita::STATUS_RESERVADA,
+            Cita::STATUS_ATTENTION,
+            Cita::STATUS_COMPLETED,
+        ]);
         $pendingTasks  = $this->especialistaService->getPendingTasks($especialista->id);
 
         // Próxima cita (para el contador de tiempo libre): la primera cuya sesión aún
@@ -63,10 +68,11 @@ class DoctorController extends Controller
 
         // Recordatorios de mañana: cuántas citas hay y cuántas ya se notificaron
         $manana = now()->addDay()->toDateString();
-        $citasManana = \App\Models\Cita::whereHas('disponibilidad', fn ($q) => $q->whereDate('fecha', $manana))
-            ->where('especialista_id', $especialista->id)
-            ->whereIn('estado', [\App\Models\Cita::STATUS_RESERVADA, \App\Models\Cita::STATUS_RESCHEDULED])
-            ->count();
+        $citasManana = $this->especialistaService->countSessionsByDate($especialista->id, $manana, [
+            Cita::STATUS_RESERVADA,
+            Cita::STATUS_RESCHEDULED,
+            Cita::STATUS_ATTENTION,
+        ]);
         $recordatorios = app(\App\Services\Recordatorio\RecordatorioService::class)->logDeFecha($manana, $especialista->id);
 
         // Calendario (modal "Ver calendario"): todas las citas del especialista
@@ -107,7 +113,7 @@ class DoctorController extends Controller
         }
 
         return view('doctor.dashboard', compact(
-            'especialista', 'todaySessions', 'pendingTasks', 'nextAppointment',
+            'especialista', 'todaySessions', 'todaySessionsCount', 'pendingTasks', 'nextAppointment',
             'solicitudesPendientes', 'citasManana', 'recordatorios', 'calendarDays'
         ));
     }
@@ -333,7 +339,7 @@ class DoctorController extends Controller
                 // Datos para el evento de calendar (reusando lógica de MeetingController)
                 $meetingData = [
                     'title'       => 'Sesión Terapéutica: ' . ($cita->paciente->nombre ?? 'Paciente'),
-                    'description' => 'Sesión virtual agendada vía Sia.',
+                    'description' => 'Sesión virtual agendada vía ' . config('clinic.name') . '.',
                     'start_time'  => $cita->disponibilidad->fecha->toDateString() . ' ' . $cita->disponibilidad->hora_inicio,
                     'end_time'    => $cita->disponibilidad->fecha->toDateString() . ' ' . $cita->disponibilidad->hora_fin,
                     // Invitar a paciente y especialista para que la reunión quede en sus calendarios
@@ -714,6 +720,30 @@ class DoctorController extends Controller
                 route('portal.index', [], false) . '#solicitudes'
             );
 
+            // Notificar al solicitante si es distinto del paciente (por ejemplo, recepcionista)
+            if ($solicitud->solicitante_usuario_id) {
+                $url = $solicitud->solicitante === 'recepcionista' ? route('receptionist.dashboard', [], false) : route('portal.index', [], false) . '#solicitudes';
+                \App\Models\Notificacion::crear(
+                    $solicitud->solicitante_usuario_id,
+                    \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                    'Solicitud aprobada',
+                    'La solicitud de reprogramación para la cita #' . $solicitud->cita_id . ' fue aprobada.',
+                    $url
+                );
+            }
+
+            // Notificar a administradores
+            $adminIds = \App\Models\Usuario::whereHas('rol', function($q){ $q->where('nombre', \App\Models\Usuario::ROL_ADMIN); })->pluck('id');
+            foreach ($adminIds as $adminId) {
+                \App\Models\Notificacion::crear(
+                    $adminId,
+                    \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                    'Solicitud aprobada',
+                    'Se aprobó una solicitud de reprogramación para la cita #' . $solicitud->cita_id . '.',
+                    route('admin.dashboard', [], false)
+                );
+            }
+
             return back()->with('success', 'Solicitud aprobada. La cita se reprogramó al nuevo horario.');
         } catch (\Exception $e) {
             return back()->with('error', 'No se pudo reprogramar: ' . $e->getMessage());
@@ -753,6 +783,31 @@ class DoctorController extends Controller
                 (filled($validated['respuesta_especialista'] ?? null) ? ' Motivo: ' . $validated['respuesta_especialista'] : ''),
             route('portal.index', [], false) . '#solicitudes'
         );
+
+        // Notificar al solicitante si fue otra persona (por ejemplo recepcionista)
+        if ($solicitud->solicitante_usuario_id) {
+            $url = $solicitud->solicitante === 'recepcionista' ? route('receptionist.dashboard', [], false) : route('portal.index', [], false) . '#solicitudes';
+            \App\Models\Notificacion::crear(
+                $solicitud->solicitante_usuario_id,
+                \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                'Solicitud rechazada',
+                'La solicitud de reprogramación para la cita #' . $solicitud->cita_id . ' fue rechazada.' .
+                    (filled($validated['respuesta_especialista'] ?? null) ? ' Motivo: ' . $validated['respuesta_especialista'] : ''),
+                $url
+            );
+        }
+
+        // Notificar a administradores
+        $adminIds = \App\Models\Usuario::whereHas('rol', function($q){ $q->where('nombre', \App\Models\Usuario::ROL_ADMIN); })->pluck('id');
+        foreach ($adminIds as $adminId) {
+            \App\Models\Notificacion::crear(
+                $adminId,
+                \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                'Solicitud rechazada',
+                'Se rechazó una solicitud de reprogramación para la cita #' . $solicitud->cita_id . '.',
+                route('admin.dashboard', [], false)
+            );
+        }
 
         return back()->with('success', 'Solicitud rechazada.');
     }

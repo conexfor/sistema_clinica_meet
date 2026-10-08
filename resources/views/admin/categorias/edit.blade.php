@@ -16,7 +16,7 @@
     <form action="{{ route('admin.categorias.update', $categoria->id) }}" method="POST" class="space-y-8">
         @csrf
         @method('PUT')
-        @include('admin.categorias._form', ['submitLabel' => 'Guardar cambios', 'submitClass' => 'btn-primary'])
+        @include('admin.categorias._form', ['submitLabel' => 'Actualizar', 'submitClass' => 'btn-primary'])
     </form>
 </div>
 @endsection

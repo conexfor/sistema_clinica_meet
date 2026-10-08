@@ -10,7 +10,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label class="label">Nombre del servicio</label>
-                <input type="text" name="nombre" value="{{ old('nombre', $servicio->nombre ?? '') }}" required placeholder="Ej: Terapia de pareja" class="field">
+                <input type="text" name="nombre" value="{{ old('nombre', $servicio->nombre ?? '') }}" required placeholder="Ej: Servicio de pareja" class="field">
                 @error('nombre') <p class="text-sand-700 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
             </div>
             <div>
@@ -23,7 +23,13 @@
                 </select>
                 @error('categoria_id') <p class="text-sand-700 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
                 @if($categorias->isEmpty())
-                    <p class="text-xs mt-1.5 text-ink-500">No hay categorías activas. <a href="{{ route('admin.categorias.create') }}" class="font-bold text-sage-600 hover:underline">Crea una categoría</a> primero.</p>
+                    <p class="text-xs mt-1.5 text-ink-500">No hay categorías activas.
+                        @if(auth()->user()->hasAction('categorias_create'))
+                            <a href="{{ route('admin.categorias.create') }}" class="font-bold text-sage-600 hover:underline">Crea una categoría</a> primero.
+                        @else
+                            Pide a un administrador que cree una categoría para ti.
+                        @endif
+                    </p>
                 @endif
             </div>
         </div>

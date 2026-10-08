@@ -16,6 +16,15 @@ class RoleSeeder extends Seeder
         $roleMap = [];
         foreach ($roles as $nombre) {
             $rol = Rol::firstOrCreate(['nombre' => $nombre]);
+            $existingActions = $rol->acciones ?? [];
+
+            if ($nombre === 'admin') {
+                $rol->acciones = array_values(array_unique(array_merge($existingActions, array_keys(config('role_actions.available_actions', [])))));
+            } else {
+                $rol->acciones = array_values(array_unique(array_merge($existingActions, config('role_actions.defaults.' . $nombre, []))));
+            }
+
+            $rol->save();
             $roleMap[$nombre] = $rol->id;
         }
 

@@ -18,7 +18,7 @@
         <div class="p-12 text-white relative bg-gradient-to-br from-sage-700 to-sage-900">
             <div class="absolute top-0 right-0 w-64 h-64 bg-sand-300/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
             <h1 class="font-serif text-3xl relative z-10">Configuración de perfil</h1>
-            <p class="text-cream-100/80 mt-2 relative z-10">Personaliza cómo te ven tus pacientes en Sia.</p>
+            <p class="text-cream-100/80 mt-2 relative z-10">Personaliza cómo te ven tus pacientes en {{ config('clinic.name') }}.</p>
         </div>
 
         <form action="{{ route('doctor.profile.update') }}" method="POST" enctype="multipart/form-data" class="p-8 md:p-12">

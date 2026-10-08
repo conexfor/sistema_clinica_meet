@@ -1,4 +1,4 @@
-@extends('components.layouts.app')
+@extends(auth()->check() && auth()->user()->isReceptionist() ? 'components.layouts.receptionist' : 'components.layouts.app')
 
 @section('content')
 <div class="relative min-h-screen pb-20">
@@ -218,6 +218,16 @@
                         </div>
 
                         <div class="pt-6">
+                            @if($isReceptionist && isset($rescheduleId))
+                                <div class="mb-4">
+                                    <label class="label !text-[10px] !uppercase !tracking-widest">Solicitante</label>
+                                    <select name="solicitante" class="field appearance-none cursor-pointer">
+                                        <option value="recepcionista" selected>Recepción (yo)</option>
+                                        <option value="paciente">Paciente (solicitado por paciente)</option>
+                                    </select>
+                                </div>
+                            @endif
+
                             <button type="submit" class="btn-primary w-full py-5 text-xs uppercase tracking-[0.2em]">
                                 {{ isset($rescheduleId) ? 'Confirmar reprogramación' : 'Confirmar y pagar S/ ' . number_format($calculatedTotal, 2) }}
                             </button>

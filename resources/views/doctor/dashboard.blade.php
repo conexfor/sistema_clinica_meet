@@ -61,7 +61,7 @@
                 <div class="w-10 h-10 rounded-2xl bg-sage-100 text-sage-600 flex items-center justify-center mb-4">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 </div>
-                <h3 class="font-serif text-4xl text-sage-900 mb-1">{{ $todaySessions->count() }}</h3>
+                <h3 class="font-serif text-4xl text-sage-900 mb-1">{{ $todaySessionsCount }}</h3>
                 <p class="text-xs font-bold text-ink-500 uppercase tracking-widest">Sesiones hoy</p>
             </div>
             <div class="surface p-6 flex-1 flex flex-col justify-center">
@@ -249,7 +249,7 @@
 
     <!-- Botón flotante: nota rápida post-sesión -->
     @if($todaySessions->isNotEmpty())
-    <button @click="quickNote = true" class="fixed bottom-6 right-6 z-[90] w-16 h-16 rounded-2xl bg-sage-600 hover:bg-sage-700 text-white shadow-lift flex items-center justify-center transition-all hover:scale-105" title="Nota rápida post-sesión">
+    <button @click="quickNote = true" class="fixed bottom-6 left-6 z-[90] w-16 h-16 rounded-2xl bg-sage-600 hover:bg-sage-700 text-white shadow-lift flex items-center justify-center transition-all hover:scale-105" title="Nota rápida post-sesión">
         <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
     </button>
 

@@ -4,13 +4,17 @@ namespace App\Services\Reception;
 
 use App\Models\Cita;
 use App\Models\Usuario;
+use App\Models\Rol;
 use App\Models\Disponibilidad;
 use App\Models\Especialista;
+use App\Services\Booking\MedicalBookingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ReceptionistService
 {
+    public function __construct(protected MedicalBookingService $medicalBookingService) {}
+
     /**
      * Obtiene las estadísticas para el dashboard de Recepción,
      * adaptadas a la estructura analítica premium (DentalPro Replica).
@@ -20,39 +24,47 @@ class ReceptionistService
         $now = now();
 
         // --- 1. Calcular KPIs Principales (datos reales del sistema) ---
-        // Citas Agendadas Hoy (registradas hoy en el sistema)
-        $agendadasHoy = Cita::whereDate('created_at', $now->toDateString())->count();
+        // Citas Agendadas Hoy (sesiones nuevas registradas hoy)
+        $agendadasHoy = (int) Cita::whereDate('created_at', $now->toDateString())
+            ->selectRaw('COALESCE(SUM(COALESCE(cantidad_sesiones, 1)), 0) as total')
+            ->value('total');
 
         // Cobros Realizados (Mes)
         $cobrosMes = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->whereMonth('disponibilidades.fecha', $now->month)
             ->whereYear('disponibilidades.fecha', $now->year)
-            ->where('citas.estado', Cita::STATUS_COMPLETED)
+            ->whereNotNull('citas.metodo_pago')
             ->sum('citas.total');
 
-        // Total Citas del Mes (Conteo)
-        $totalCitasMes = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+        // Total Citas del Mes (sesiones reales)
+        $totalCitasMes = (int) Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->whereMonth('disponibilidades.fecha', $now->month)
             ->whereYear('disponibilidades.fecha', $now->year)
-            ->count();
+            ->selectRaw('COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as total')
+            ->value('total');
 
-        // Citas Realizadas (Mes)
-        $realizadasMes = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+        // Citas Realizadas (Mes) por sesiones completadas
+        $realizadasMes = (int) Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->whereMonth('disponibilidades.fecha', $now->month)
             ->whereYear('disponibilidades.fecha', $now->year)
             ->where('citas.estado', Cita::STATUS_COMPLETED)
-            ->count();
+            ->selectRaw('COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as total')
+            ->value('total');
 
-        // Citas Canceladas (Mes)
-        $canceladasMes = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+        // Citas Canceladas (Mes) por sesiones canceladas
+        $canceladasMes = (int) Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->whereMonth('disponibilidades.fecha', $now->month)
             ->whereYear('disponibilidades.fecha', $now->year)
             ->where('citas.estado', Cita::STATUS_CANCELLED)
-            ->count();
+            ->selectRaw('COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as total')
+            ->value('total');
 
-        // Doctores con disponibilidad libre hoy
-        $doctoresDisp = Especialista::whereHas('disponibilidades', function($q) use ($now) {
-            $q->where('fecha', $now->toDateString())->where('esta_reservada', false);
+        // Especialistas con disponibilidad libre hoy.
+        // Usamos la misma lógica de slots que el workflow de agendar cita,
+        // para que el KPI refleje recursos reales y no solo registros de
+        // disponibilidades físicas sin considerar la jornada semanal.
+        $especialistasDisp = Especialista::with('servicios')->get()->filter(function ($especialista) use ($now) {
+            return $this->especialistaHasAvailabilityToday($especialista, $now->toDateString());
         })->count();
 
         // --- 2. Chart: Flujo de Reservas por Día (datos reales) ---
@@ -61,7 +73,7 @@ class ReceptionistService
 
         $reservasSemana = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->whereBetween('disponibilidades.fecha', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
-            ->select('disponibilidades.fecha', DB::raw('count(*) as total'))
+            ->selectRaw('disponibilidades.fecha, COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as total')
             ->groupBy('disponibilidades.fecha')
             ->get()
             ->pluck('total', 'fecha');
@@ -79,7 +91,7 @@ class ReceptionistService
             ->whereMonth('disponibilidades.fecha', $now->month)
             ->whereYear('disponibilidades.fecha', $now->year)
             ->whereNotNull('citas.metodo_pago')
-            ->select('citas.metodo_pago', DB::raw('count(*) as total'))
+            ->selectRaw('citas.metodo_pago, COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as total')
             ->groupBy('citas.metodo_pago')
             ->pluck('total', 'citas.metodo_pago')
             ->toArray();
@@ -87,11 +99,12 @@ class ReceptionistService
         return [
             'current_period' => $period,
             'kpis' => [
-                'agendadas_hoy'   => $agendadasHoy,
-                'realizadas_mes'  => $realizadasMes,
-                'total_citas_mes' => $totalCitasMes,
-                'doctores_disp'   => $doctoresDisp,
-                'canceladas_mes'  => $canceladasMes,
+                'agendadas_hoy'      => $agendadasHoy,
+                'realizadas_mes'     => $realizadasMes,
+                'total_citas_mes'    => $totalCitasMes,
+                'especialistas_disp' => $especialistasDisp,
+                'canceladas_mes'     => $canceladasMes,
+                'cobros_mes'         => $cobrosMes,
             ],
             'charts' => [
                 'flujo_labels' => array_keys($flujoData),
@@ -102,6 +115,48 @@ class ReceptionistService
         ];
     }
 
+    private function especialistaHasAvailabilityToday($especialista, string $fecha): bool
+    {
+        $now = now();
+        $duraciones = $especialista->servicios
+            ->map(fn($servicio) => $servicio->duracion ?? 60)
+            ->unique()
+            ->values();
+
+        if ($duraciones->isEmpty()) {
+            return false;
+        }
+
+        foreach ($duraciones as $duracion) {
+            $slots = $this->medicalBookingService->getAvailableSlots(
+                $especialista->id,
+                $fecha,
+                'standard',
+                1,
+                $duracion
+            );
+
+            $flatSlots = collect($slots['morning'])
+                ->concat($slots['afternoon'])
+                ->concat($slots['evening']);
+
+            if ($flatSlots->contains(function ($slot) use ($now, $fecha) {
+                return \Carbon\Carbon::parse("{$fecha} {$slot['start']}")->greaterThanOrEqualTo($now);
+            })) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function getAvailableSpecialistIdsOnDate(string $fecha)
+    {
+        return Especialista::with('servicios')->get()
+            ->filter(fn($especialista) => $this->especialistaHasAvailabilityToday($especialista, $fecha))
+            ->pluck('id');
+    }
+
     /**
      * Buscar un usuario por email o nombre, o crear uno nuevo si no existe.
      * En este sistema, los pacientes son Usuarios con rol_id = 1.
@@ -109,7 +164,9 @@ class ReceptionistService
     public function searchOrCreatePatient(array $data): Usuario
     {
         $email = $data['email'] ?? null;
-        
+        $telefono = $data['telefono'] ?? null;
+        $patientType = $data['patient_type'] ?? 'simple';
+
         if ($email) {
             $usuario = Usuario::where('email', $email)->first();
             if ($usuario) {
@@ -117,20 +174,25 @@ class ReceptionistService
             }
         }
 
+        if ($telefono) {
+            $usuario = Usuario::where('telefono', $telefono)->first();
+            if ($usuario) {
+                return $usuario;
+            }
+        }
+
         // Si no existe, lo creamos
-        return DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data, $patientType) {
+            $patientRoleId = Rol::where('nombre', Usuario::ROL_PATIENT)->value('id') ?? 4;
             $usuario = Usuario::create([
                 'nombre' => $data['nombre'],
-                'email' => $data['email'],
+                'email' => $patientType === 'account' ? $data['email'] : null,
                 'telefono' => $data['telefono'] ?? null,
-                'password' => bcrypt('pass123'), // Password genérica para acceso posterior
-                'rol_id' => 4, // Paciente
+                'password' => $patientType === 'account' ? bcrypt($data['password']) : null,
+                'rol_id' => $patientRoleId,
             ]);
 
-            // Crear el perfil de paciente
-            $usuario->paciente()->create([
-                // Ya no guardamos telefono/numero aquí
-            ]);
+            $usuario->paciente()->create([]);
 
             return $usuario;
         });
@@ -192,10 +254,12 @@ class ReceptionistService
         }
 
         if (!empty($filters['disponibles_hoy'])) {
-            $query->whereHas('especialista.disponibilidades', function($q) {
-                $q->whereDate('fecha', now()->toDateString())
-                  ->where('esta_reservada', false);
-            });
+            $availableEspecialistaIds = $this->getAvailableSpecialistIdsOnDate(now()->toDateString());
+            if ($availableEspecialistaIds->isEmpty()) {
+                $query->whereRaw('0 = 1');
+            } else {
+                $query->whereIn('citas.especialista_id', $availableEspecialistaIds);
+            }
         }
 
         // Orden de la agenda por prioridad respecto al momento actual. La cita se compara como

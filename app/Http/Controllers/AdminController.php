@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\Especialista;
+use App\Models\LandingImage;
 use App\Models\Usuario;
 use App\Models\Cita;
 use App\Models\Modalidad;
@@ -57,11 +58,16 @@ class AdminController extends Controller
     /**
      * Listado de todas las citas (Reporte).
      */
-    public function citasIndex(): \Illuminate\View\View
+    public function citasIndex(Request $request): \Illuminate\View\View
     {
-        $citas = Cita::with(['paciente', 'especialista.usuario', 'disponibilidad', 'modalidad'])
-            ->latest()
-            ->paginate(15);
+        $query = Cita::with(['paciente', 'especialista.usuario', 'disponibilidad', 'modalidad'])
+            ->latest();
+
+        if ($estado = $request->get('estado')) {
+            $query->where('estado', $estado);
+        }
+
+        $citas = $query->paginate(15)->withQueryString();
 
         return view('admin.citas.index', compact('citas'));
     }
@@ -73,6 +79,55 @@ class AdminController extends Controller
     {
         $especialistas = Especialista::with('usuario', 'servicios')->get();
         return view('admin.especialistas.index', compact('especialistas'));
+    }
+
+    /**
+     * Sección de imágenes de la landing pública.
+     */
+    public function landingImages(): \Illuminate\View\View
+    {
+        $images = LandingImage::orderBy('sort_order')->get()->keyBy('position');
+        return view('admin.landing-images.index', compact('images'));
+    }
+
+    /**
+     * Actualizar imágenes y texto alternativo de la landing.
+     */
+    public function updateLandingImages(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $positions = array_keys(LandingImage::SLOTS);
+
+        $rules = [];
+        foreach ($positions as $position) {
+            $rules["images.{$position}"] = 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096';
+            $rules["alts.{$position}"] = 'nullable|string|max:255';
+        }
+
+        $validated = $request->validate($rules);
+        $uploadedImages = $request->file('images', []);
+        if (!is_array($uploadedImages)) {
+            $uploadedImages = [];
+        }
+
+        foreach ($positions as $position) {
+            $record = LandingImage::firstOrCreate(['position' => $position], ['sort_order' => array_search($position, $positions) + 1]);
+            $uploaded = $uploadedImages[$position] ?? null;
+
+            if ($uploaded instanceof \Illuminate\Http\UploadedFile) {
+                if ($record->filename && str_starts_with($record->filename, 'landing_images/')) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($record->filename);
+                }
+                $record->filename = $uploaded->store('landing_images', 'public');
+            }
+
+            if (isset($validated['alts'][$position])) {
+                $record->alt_text = $validated['alts'][$position];
+            }
+
+            $record->save();
+        }
+
+        return redirect()->route('admin.landing-images.index')->with('success', 'Imágenes de landing actualizadas correctamente.');
     }
 
     /**

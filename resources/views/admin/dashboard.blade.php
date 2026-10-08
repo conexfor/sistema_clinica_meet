@@ -84,13 +84,13 @@
                         <span class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Total citas</span>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-y-3 mt-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 mt-auto">
                     @php $donutColors = ['#3480ae', '#c9a98c', '#83bbdd', '#d9be9c', '#529bc8', '#e7d5bf']; @endphp
-                    @foreach(array_slice($stats['charts']['volume_labels'] ?? [], 0, 6) as $index => $label)
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background-color: {{ $donutColors[$index % count($donutColors)] }};"></span>
-                        <span class="text-[11px] font-semibold text-ink-600 truncate max-w-[100px]" title="{{ $label }}">{{ $label }}</span>
-                        <span class="text-[11px] font-bold text-sage-900 ml-auto">{{ $stats['charts']['volume_values'][$index] ?? 0 }}</span>
+                    @foreach(($stats['charts']['volume_labels'] ?? []) as $index => $label)
+                    <div class="flex items-center gap-2 min-w-0 py-0.5">
+                        <span class="w-3 h-3 rounded-full shrink-0" style="background-color: {{ $donutColors[$index % count($donutColors)] }};"></span>
+                        <span class="flex-1 min-w-0 text-[11px] font-semibold text-ink-600 truncate leading-relaxed" title="{{ $label }}">{{ $label }}</span>
+                        <span class="shrink-0 text-[11px] font-bold text-sage-900 text-right leading-none pr-0.5">{{ $stats['charts']['volume_values'][$index] ?? 0 }}</span>
                     </div>
                     @endforeach
                 </div>

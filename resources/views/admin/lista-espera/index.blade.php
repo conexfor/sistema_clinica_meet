@@ -107,26 +107,30 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-end gap-1">
-                                    @if($sol->estado !== 'contactado')
-                                        <form action="{{ route('admin.lista-espera.estado', $sol->id) }}" method="POST">
-                                            @csrf @method('PATCH')
-                                            <input type="hidden" name="estado" value="contactado">
-                                            <button type="submit" class="px-3 py-1.5 text-xs font-bold text-ink-500 hover:text-sage-700 rounded-lg hover:bg-sage-50" title="Marcar como contactado">Contactado</button>
+                                    @if(auth()->user()->hasAction('lista_espera_update_estado'))
+                                        @if($sol->estado !== 'contactado')
+                                            <form action="{{ route('admin.lista-espera.estado', $sol->id) }}" method="POST">
+                                                @csrf @method('PATCH')
+                                                <input type="hidden" name="estado" value="contactado">
+                                                <button type="submit" class="px-3 py-1.5 text-xs font-bold text-ink-500 hover:text-sage-700 rounded-lg hover:bg-sage-50" title="Marcar como contactado">Contactado</button>
+                                            </form>
+                                        @endif
+                                        @if($sol->estado !== 'resuelto')
+                                            <form action="{{ route('admin.lista-espera.estado', $sol->id) }}" method="POST">
+                                                @csrf @method('PATCH')
+                                                <input type="hidden" name="estado" value="resuelto">
+                                                <button type="submit" class="px-3 py-1.5 text-xs font-bold text-sage-600 hover:text-sage-800 rounded-lg hover:bg-sage-50" title="Marcar como resuelto">Resuelto</button>
+                                            </form>
+                                        @endif
+                                    @endif
+                                    @if(auth()->user()->hasAction('lista_espera_destroy'))
+                                        <form action="{{ route('admin.lista-espera.destroy', $sol->id) }}" method="POST" onsubmit="return confirm('¿Eliminar esta solicitud?');">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="p-2 text-ink-400 hover:text-sand-600" title="Eliminar">
+                                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                            </button>
                                         </form>
                                     @endif
-                                    @if($sol->estado !== 'resuelto')
-                                        <form action="{{ route('admin.lista-espera.estado', $sol->id) }}" method="POST">
-                                            @csrf @method('PATCH')
-                                            <input type="hidden" name="estado" value="resuelto">
-                                            <button type="submit" class="px-3 py-1.5 text-xs font-bold text-sage-600 hover:text-sage-800 rounded-lg hover:bg-sage-50" title="Marcar como resuelto">Resuelto</button>
-                                        </form>
-                                    @endif
-                                    <form action="{{ route('admin.lista-espera.destroy', $sol->id) }}" method="POST" onsubmit="return confirm('¿Eliminar esta solicitud?');">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="p-2 text-ink-400 hover:text-sand-600" title="Eliminar">
-                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                        </button>
-                                    </form>
                                 </div>
                             </td>
                         </tr>

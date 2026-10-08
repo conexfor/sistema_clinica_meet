@@ -18,73 +18,23 @@ class EspecialistaService
      */
     public function getDashboardStats(int $especialistaId, string $period = 'month'): array
     {
-        $now = now();
-        
-        // --- 1. Calcular KPIs Principales (Doctor Context) ---
-        // Citas Hoy
-        $citasHoy = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
-            ->where('citas.especialista_id', $especialistaId)
-            ->whereDate('disponibilidades.fecha', $now->toDateString())
-            ->where('citas.estado', '!=', Cita::STATUS_CANCELLED)
-            ->count();
-        if ($citasHoy == 0) $citasHoy = rand(4, 9); // mock for visual effect
-        
-        // Total Pacientes Únicos
-        $pacientesUnicos = Cita::where('especialista_id', $especialistaId)->distinct('paciente_id')->count('paciente_id');
-        if ($pacientesUnicos == 0) $pacientesUnicos = rand(40, 150);
-
-        // Ingresos Estimados (Mes)
-        $ingresosMes = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
-            ->where('citas.especialista_id', $especialistaId)
-            ->whereMonth('disponibilidades.fecha', $now->month)
-            ->where('citas.estado', Cita::STATUS_COMPLETED)
-            ->sum('citas.total');
-        if ($ingresosMes == 0) $ingresosMes = rand(4000, 12000);
-
-        // Horas Trabajadas (Mes) -> mock
-        $horasTrabajadas = rand(80, 160);
-
-        // Rating
-        $rating = Cita::where('especialista_id', $especialistaId)->whereNotNull('calificacion')->avg('calificacion');
-        if (!$rating) $rating = 4.9;
-
-        // --- 2. Chart: Productividad Semanal (Horizontal Bar) ---
-        $productividadData = [
-            'Lunes' => rand(5, 12),
-            'Martes' => rand(6, 15),
-            'Miércoles' => rand(4, 10),
-            'Jueves' => rand(7, 14),
-            'Viernes' => rand(8, 16),
-            'Sábado' => rand(2, 8),
-        ];
-
-        // --- 3. Chart: Tipos de Pacientes (Donut) ---
-        $tiposData = [
-            'Nuevos' => rand(10, 30),
-            'Recurrentes' => rand(40, 90),
-            'Derivados' => rand(5, 20),
-            'Alta Médica' => rand(2, 10),
-        ];
+        // Reutiliza el mismo cálculo de métricas reales para el dashboard del especialista.
+        $metrics = $this->getRealMetrics($especialistaId);
 
         return [
             'current_period' => $period,
             'kpis' => [
-                'citas_hoy'       => $citasHoy,
-                'citas_growth'    => 12.5,
-                'pacientes_tot'   => $pacientesUnicos,
-                'pacientes_gwth'  => 8.4,
-                'ingresos_mes'    => $ingresosMes,
-                'ingresos_gwth'   => 15.2,
-                'horas_mes'       => $horasTrabajadas,
-                'horas_gwth'      => 4.1,
-                'rating_avg'      => number_format($rating, 1),
+                'citas_hoy'      => $metrics['kpis']['citas_hoy'],
+                'citas_growth'   => 0.0,
+                'pacientes_tot'  => $metrics['kpis']['pacientes_tot'],
+                'pacientes_gwth' => 0.0,
+                'ingresos_mes'   => 0,
+                'ingresos_gwth'  => 0.0,
+                'horas_mes'      => 0,
+                'horas_gwth'     => 0.0,
+                'rating_avg'     => null,
             ],
-            'charts' => [
-                'prod_labels' => array_keys($productividadData),
-                'prod_values' => array_values($productividadData),
-                'type_labels' => array_keys($tiposData),
-                'type_values' => array_values($tiposData),
-            ],
+            'charts' => $metrics['charts'],
         ];
     }
 
@@ -226,6 +176,16 @@ class EspecialistaService
             ->get();
     }
 
+    public function countSessionsByDate(int $especialistaId, string $date, array $states = [Cita::STATUS_RESERVADA, Cita::STATUS_ATTENTION, Cita::STATUS_COMPLETED]): int
+    {
+        return (int) Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+            ->where('citas.especialista_id', $especialistaId)
+            ->whereDate('disponibilidades.fecha', $date)
+            ->whereIn('citas.estado', $states)
+            ->selectRaw('COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as total')
+            ->value('total');
+    }
+
     /**
      * Tareas pendientes (no completadas) que el especialista dejó a sus pacientes,
      * con la próxima cita de cada paciente para saber cuándo preguntar por ellas.
@@ -261,25 +221,28 @@ class EspecialistaService
     {
         $now = now();
 
-        $citasHoy = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+        $citasHoy = (int) Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->where('citas.especialista_id', $especialistaId)
             ->whereDate('disponibilidades.fecha', $now->toDateString())
             ->where('citas.estado', '!=', Cita::STATUS_CANCELLED)
-            ->count();
+            ->selectRaw('COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as total')
+            ->value('total');
 
-        $citasMes = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+        $citasMes = (int) Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->where('citas.especialista_id', $especialistaId)
             ->whereMonth('disponibilidades.fecha', $now->month)
             ->whereYear('disponibilidades.fecha', $now->year)
             ->where('citas.estado', '!=', Cita::STATUS_CANCELLED)
-            ->count();
+            ->selectRaw('COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as total')
+            ->value('total');
 
-        $completadasMes = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+        $completadasMes = (int) Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->where('citas.especialista_id', $especialistaId)
             ->whereMonth('disponibilidades.fecha', $now->month)
             ->whereYear('disponibilidades.fecha', $now->year)
             ->where('citas.estado', Cita::STATUS_COMPLETED)
-            ->count();
+            ->selectRaw('COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as total')
+            ->value('total');
 
         $pacientesUnicos = Cita::where('especialista_id', $especialistaId)->distinct('paciente_id')->count('paciente_id');
 
@@ -289,9 +252,11 @@ class EspecialistaService
             ->whereMonth('disponibilidades.fecha', $now->month)
             ->whereYear('disponibilidades.fecha', $now->year)
             ->where('citas.estado', '!=', Cita::STATUS_CANCELLED)
-            ->get(['disponibilidades.fecha'])
-            ->groupBy(fn ($c) => Carbon::parse($c->fecha)->dayOfWeekIso) // 1=Lun..7=Dom
-            ->map->count();
+            ->selectRaw('disponibilidades.fecha, COALESCE(SUM(COALESCE(citas.cantidad_sesiones, 1)), 0) as sesiones')
+            ->groupBy('disponibilidades.fecha')
+            ->get()
+            ->groupBy(fn ($c) => Carbon::parse($c->fecha)->dayOfWeekIso)
+            ->map(fn ($group) => $group->sum('sesiones'));
 
         $diasSemana = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado'];
         $prodValues = [];

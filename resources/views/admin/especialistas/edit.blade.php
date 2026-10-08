@@ -81,10 +81,29 @@
 
         <div class="pt-2">
             <button type="submit" class="btn-accent w-full py-5 text-xs uppercase tracking-[0.2em]">
-                Guardar cambios
+                Actualizar
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </button>
         </div>
     </form>
 </div>
+
+<script>
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('photo-preview').src = e.target.result; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('foto-input');
+        if (input) {
+            input.addEventListener('change', function() {
+                previewImage(this);
+            });
+        }
+    });
+</script>
 @endsection

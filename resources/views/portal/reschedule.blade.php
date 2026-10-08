@@ -1,4 +1,4 @@
-@extends('components.layouts.portal')
+@extends(auth()->check() && auth()->user()->isReceptionist() ? 'components.layouts.receptionist' : 'components.layouts.portal')
 
 @php $active = 'index'; @endphp
 
@@ -49,7 +49,7 @@
         @endif
     </div>
 
-    <form method="POST" action="{{ route('portal.reschedule.store', $cita) }}" x-data="{ selected: '' }">
+    <form method="POST" action="{{ $formAction ?? route('portal.reschedule.store', $cita) }}" x-data="{ selected: '' }">
         @csrf
         <input type="hidden" name="fecha_solicitada" value="{{ $fecha }}">
         <input type="hidden" name="hora_solicitada" x-model="selected">
@@ -99,6 +99,16 @@
             <label for="motivo" class="label">Motivo (opcional)</label>
             <textarea id="motivo" name="motivo" rows="3" maxlength="1000" placeholder="Cuéntale a tu especialista por qué necesitas el cambio" class="field resize-none">{{ old('motivo') }}</textarea>
         </div>
+
+        @if(auth()->check() && auth()->user()->isReceptionist())
+            <div class="surface p-6 md:p-8 mb-6">
+                <label class="label">¿Quién solicita el cambio?</label>
+                <select name="solicitante" class="field">
+                    <option value="paciente" {{ (old('solicitante') ?? ($pending->solicitante ?? 'paciente')) === 'paciente' ? 'selected' : '' }}>Paciente</option>
+                    <option value="especialista" {{ (old('solicitante') ?? ($pending->solicitante ?? 'paciente')) === 'especialista' ? 'selected' : '' }}>Especialista</option>
+                </select>
+            </div>
+        @endif
 
         <button type="submit" class="btn-primary w-full py-4 text-xs uppercase tracking-[0.2em]">
             Enviar solicitud de cambio

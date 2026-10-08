@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Galería Multimedia – Sia Clínica Psicológica</title>
-    <meta name="description" content="Conoce nuestras instalaciones, equipo y recursos multimedia de Sia Clínica Psicológica.">
+    <title>Galería Multimedia – {{ config('clinic.name') }} Clínica Psicológica</title>
+    <meta name="description" content="Conoce nuestras instalaciones, equipo y recursos multimedia de {{ config('clinic.name') }} Clínica Psicológica.">
 
     {{-- Google Fonts: mismos que el dashboard principal --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -123,7 +123,7 @@
         items: [
             { id:1,  type:'photo', cat:'instalaciones', src:'https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=800&auto=format&fit=crop', title:'Sala de Espera Principal',  size:'large'  },
             { id:2,  type:'photo', cat:'equipo',        src:'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop', title:'Dra. Ana Quiroga – Psicóloga Clínica', size:'normal' },
-            { id:3,  type:'video', cat:'videos',        src:'https://www.w3schools.com/html/mov_bbb.mp4',                                            title:'Recorrido Virtual Sia',           size:'normal' },
+            { id:3,  type:'video', cat:'videos',        src:'https://www.w3schools.com/html/mov_bbb.mp4',                                            title:'Recorrido Virtual {{ config('clinic.name') }}',           size:'normal' },
             { id:4,  type:'photo', cat:'instalaciones', src:'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&auto=format&fit=crop', title:'Consultorio Terapéutico A',       size:'normal' },
             { id:5,  type:'photo', cat:'recursos',      src:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&auto=format&fit=crop', title:'Naturaleza y Bienestar',          size:'large'  },
             { id:6,  type:'photo', cat:'equipo',        src:'https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?w=800&auto=format&fit=crop', title:'Equipo Interdisciplinario',       size:'normal' },
@@ -189,10 +189,7 @@
     >
         {{-- Logo --}}
         <a href="{{ route('landing') }}" class="flex items-center gap-3 group cursor-pointer">
-            <div class="relative w-11 h-11 rounded-xl overflow-hidden shadow-sm group-hover:shadow-sage-500/20 transition-all duration-300 group-hover:scale-105">
-                <img src="{{ asset('images/logo_sia.jpeg') }}" alt="Sia Logo" class="w-full h-full object-cover">
-            </div>
-            <span class="text-2xl font-extrabold plus-jakarta tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-sage-800 to-sage-600">Sia.</span>
+            <span class="text-2xl font-extrabold plus-jakarta tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-sage-800 to-sage-600">{{ config('clinic.name') }}.</span>
         </a>
 
         {{-- Acciones navbar --}}
@@ -267,7 +264,7 @@
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-sage-600 via-sage-500 to-sand-500"> Espacio Clínico</span>
         </h1>
         <p class="text-lg text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
-            Instalaciones, equipo profesional y recursos visuales de Sia — diseñados para transmitir paz, confianza y excelencia clínica.
+            Instalaciones, equipo profesional y recursos visuales de {{ config('clinic.name') }} — diseñados para transmitir paz, confianza y excelencia clínica.
         </p>
 
         @auth

@@ -243,12 +243,10 @@ class BookingController extends Controller
             // Cargar datos de facturación
             $documentosConfig = \App\Models\ConfiguracionComprobante::all()->keyBy('tipo');
             $metodosPago = [
-                'efectivo' => 'Efectivo',
-                'contado' => 'Al Contado',
-                'tarjeta' => 'Tarjeta Débito/Crédito',
-                'transferencia' => 'Transferencia Bancaria',
+                'tarjeta' => 'Tarjeta',
                 'yape' => 'Yape',
                 'plin' => 'Plin',
+                'paypal' => 'PayPal',
             ];
 
             $isReceptionist = auth()->user()->isReceptionist();
@@ -309,6 +307,53 @@ class BookingController extends Controller
                 // Validar propiedad
                 if ($cita->paciente_id !== $user->id && !$user->isReceptionist()) {
                     throw new \Exception('No tienes permiso para reprogramar esta cita.');
+                }
+
+                // If the actor is a receptionist, do NOT immediately rebook the appointment.
+                // Instead, create a SolicitudReprogramacion so the specialist can approve.
+                if ($user->isReceptionist()) {
+                    $disponibilidadId = $data['disponibilidad_id'] ?? null;
+                    $availability = $disponibilidadId ? Disponibilidad::find($disponibilidadId) : null;
+
+                    $sol = \App\Models\SolicitudReprogramacion::create([
+                        'cita_id'          => $cita->id,
+                        'paciente_id'      => $data['paciente_id'] ?? $cita->paciente_id,
+                        'especialista_id'  => $cita->especialista_id,
+                        'slot_id'          => (string) ($disponibilidadId ?? $request->input('slot_id')),
+                        'fecha_solicitada' => $availability?->fecha ?? $request->input('fecha_solicitada'),
+                        'hora_solicitada'  => $availability?->hora_inicio ?? $request->input('hora_solicitada'),
+                        'motivo'           => $request->input('motivo') ?? null,
+                        'estado'           => \App\Models\SolicitudReprogramacion::ESTADO_PENDIENTE,
+                        'solicitante'      => $request->input('solicitante', 'recepcionista'),
+                        'solicitante_usuario_id' => $user->id,
+                    ]);
+
+                    // Notify the specialist
+                    if ($cita->especialista?->usuario_id) {
+                        \App\Models\Notificacion::crear(
+                            $cita->especialista->usuario_id,
+                            \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                            'Nueva solicitud de reprogramación',
+                            ($user->nombre ?? 'Recepción') . ' solicitó reprogramar la cita para el ' .
+                                (\Carbon\Carbon::parse($sol->fecha_solicitada)->locale('es')->isoFormat('D [de] MMMM') ?? '') . ' a las ' .
+                                (\Carbon\Carbon::parse($sol->hora_solicitada)->format('h:i A') ?? ''),
+                            route('doctor.dashboard', [], false)
+                        );
+                    }
+
+                    // Notify administrators
+                    $adminIds = \App\Models\Usuario::whereHas('rol', function($q){ $q->where('nombre', \App\Models\Usuario::ROL_ADMIN); })->pluck('id');
+                    foreach ($adminIds as $adminId) {
+                        \App\Models\Notificacion::crear(
+                            $adminId,
+                            \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                            'Solicitud de reprogramación creada',
+                            'Se creó una solicitud de reprogramación por recepción para la cita #' . $cita->id . '.',
+                            route('admin.dashboard', [], false)
+                        );
+                    }
+
+                    return redirect()->route('receptionist.dashboard')->with('success', 'Solicitud de reprogramación creada y enviada al especialista para su confirmación.');
                 }
 
                 // Usamos el servicio para manejar la lógica compleja de estados y slots
@@ -386,7 +431,7 @@ class BookingController extends Controller
             try {
                 $meetingUrl = $this->googleMeetingService->createMeeting($especialistaUser, [
                     'title'       => 'Sesión Terapéutica: ' . ($cita->paciente->nombre ?? 'Paciente'),
-                    'description' => 'Sesión virtual agendada vía Sia.',
+                    'description' => 'Sesión virtual agendada vía ' . config('clinic.name') . '.',
                     'start_time'  => $cita->disponibilidad->fecha->toDateString() . ' ' . $cita->disponibilidad->hora_inicio,
                     'end_time'    => $cita->disponibilidad->fecha->toDateString() . ' ' . $cita->disponibilidad->hora_fin,
                     'attendees'   => array_filter([

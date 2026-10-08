@@ -332,11 +332,51 @@ class CustomerPortalController extends Controller
             'slot_id.required' => 'Selecciona un horario disponible.',
         ]);
 
-        if ($cita->solicitudesReprogramacion()->where('estado', SolicitudReprogramacion::ESTADO_PENDIENTE)->exists()) {
-            return redirect()->route('portal.index')->with('info', 'Ya tienes una solicitud pendiente para esta cita.');
+        $existing = $cita->solicitudesReprogramacion()->where('estado', SolicitudReprogramacion::ESTADO_PENDIENTE)->latest()->first();
+
+        if ($existing) {
+            // If same slot was already requested, inform the user
+            if ((string)$existing->slot_id === (string)$validated['slot_id']) {
+                return redirect()->route('portal.index')->with('info', 'Ya solicitaste una reprogramación para ese horario.');
+            }
+
+            // Different slot: update the existing solicitud and notify specialist (and admins)
+            $existing->update([
+                'slot_id' => $validated['slot_id'],
+                'fecha_solicitada' => $validated['fecha_solicitada'],
+                'hora_solicitada' => $validated['hora_solicitada'],
+                'motivo' => $validated['motivo'] ?? $existing->motivo,
+            ]);
+
+            if ($cita->especialista?->usuario_id) {
+                \App\Models\Notificacion::crear(
+                    $cita->especialista->usuario_id,
+                    \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                    'Solicitud de reprogramación actualizada',
+                    ($request->user()->nombre ?? 'Un paciente') . ' actualizó la solicitud de cambio para la cita ' .
+                        ' al ' . \Carbon\Carbon::parse($validated['fecha_solicitada'])->locale('es')->isoFormat('D [de] MMMM') . ' a las ' .
+                        \Carbon\Carbon::parse($validated['hora_solicitada'])->format('h:i A') . '.',
+                    route('doctor.dashboard', [], false)
+                );
+            }
+
+            // Notify admins about the update
+            $adminIds = \App\Models\Usuario::whereHas('rol', function($q){ $q->where('nombre', \App\Models\Usuario::ROL_ADMIN); })->pluck('id');
+            foreach ($adminIds as $adminId) {
+                \App\Models\Notificacion::crear(
+                    $adminId,
+                    \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                    'Solicitud de reprogramación actualizada',
+                    'Se actualizó una solicitud de reprogramación para la cita #' . $cita->id . '.',
+                    route('admin.dashboard', [], false)
+                );
+            }
+
+            return redirect()->route('portal.index')->with('success', 'Solicitud actualizada y enviada al especialista.');
         }
 
-        SolicitudReprogramacion::create([
+        // No existing pending solicitud -> create a new one
+        $sol = SolicitudReprogramacion::create([
             'cita_id'          => $cita->id,
             'paciente_id'      => $cita->paciente_id,
             'especialista_id'  => $cita->especialista_id,
@@ -345,6 +385,8 @@ class CustomerPortalController extends Controller
             'hora_solicitada'  => $validated['hora_solicitada'],
             'motivo'           => $validated['motivo'] ?? null,
             'estado'           => SolicitudReprogramacion::ESTADO_PENDIENTE,
+            'solicitante'      => 'paciente',
+            'solicitante_usuario_id' => $request->user()->id,
         ]);
 
         // Notificar al especialista
@@ -357,6 +399,30 @@ class CustomerPortalController extends Controller
                     \Carbon\Carbon::parse($validated['fecha_solicitada'])->locale('es')->isoFormat('D [de] MMMM') . ' a las ' .
                     \Carbon\Carbon::parse($validated['hora_solicitada'])->format('h:i A') . '.',
                 route('doctor.dashboard', [], false)
+            );
+        }
+
+        // Notificar a administradores
+        $adminIds = \App\Models\Usuario::whereHas('rol', function($q){ $q->where('nombre', \App\Models\Usuario::ROL_ADMIN); })->pluck('id');
+        foreach ($adminIds as $adminId) {
+            \App\Models\Notificacion::crear(
+                $adminId,
+                \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                'Solicitud de reprogramación',
+                'El paciente ' . ($request->user()->nombre ?? 'un paciente') . ' solicitó una reprogramación para la cita #' . $cita->id,
+                route('admin.dashboard', [], false)
+            );
+        }
+
+        // Notificar a administradores
+        $adminIds = \App\Models\Usuario::whereHas('rol', function($q){ $q->where('nombre', \App\Models\Usuario::ROL_ADMIN); })->pluck('id');
+        foreach ($adminIds as $adminId) {
+            \App\Models\Notificacion::crear(
+                $adminId,
+                \App\Models\Notificacion::TIPO_REPROGRAMACION,
+                'Solicitud de reprogramación',
+                'El paciente ' . ($request->user()->nombre ?? 'un paciente') . ' solicitó una reprogramación para la cita #' . $cita->id,
+                route('admin.dashboard', [], false)
             );
         }
 

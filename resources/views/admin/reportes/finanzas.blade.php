@@ -30,8 +30,8 @@
             </p>
         </div>
 
-        <!-- Sesiones realizadas (Lupa) -->
-        <button type="button" @click="$dispatch('open-drill', { metric: 'sessions', title: 'Sesiones realizadas' })" class="surface p-5 text-left hover:border-sage-400 transition-all group">
+        <!-- Sesiones realizadas -->
+        <a href="{{ route('admin.citas.index', ['estado' => \App\Models\Cita::STATUS_COMPLETED]) }}" class="surface p-5 text-left hover:border-sage-400 transition-all group">
             <div class="flex justify-between items-start mb-3">
                 <p class="text-sm font-semibold text-ink-500">Sesiones realizadas</p>
                 <div class="w-10 h-10 rounded-2xl flex items-center justify-center bg-sage-100 text-sage-600">
@@ -40,7 +40,7 @@
             </div>
             <h3 class="font-serif text-2xl text-sage-900 mb-1.5">{{ number_format($stats['sessions']) }}</h3>
             <p class="text-xs font-semibold text-sage-600 group-hover:underline">Ver detalle →</p>
-        </button>
+        </a>
 
         <!-- Pacientes activos (Lupa) -->
         <button type="button" @click="$dispatch('open-drill', { metric: 'active_patients', title: 'Pacientes activos (30 días)' })" class="surface p-5 text-left hover:border-sage-400 transition-all group">

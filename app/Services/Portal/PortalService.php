@@ -17,39 +17,46 @@ class PortalService
     {
         $now = now();
         
-        // --- 1. Calcular KPIs Principales (Patient Context) ---
+        // --- 1. Calcular KPIs Principales (Patient Context) con datos reales ---
+        // Sesiones asistidas (sumatoria de cantidad_sesiones para citas finalizadas)
         $citasAsistidas = Cita::where('paciente_id', $pacienteId)
-            ->whereIn('estado', [Cita::STATUS_COMPLETED ?? 'Realizada', 'Realizada'])
-            ->count();
-        if ($citasAsistidas == 0) $citasAsistidas = rand(2, 6);
-        
-        $proximaCita = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+            ->where('estado', Cita::STATUS_COMPLETED)
+            ->sum('cantidad_sesiones');
+
+        // Próxima cita (reservada / en atención) — fecha más cercana en o después de hoy
+        $proximaCita = Cita::with('disponibilidad')
+            ->join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->where('citas.paciente_id', $pacienteId)
-            ->whereIn('citas.estado', [Cita::STATUS_RESERVADA ?? 'Reservada', Cita::STATUS_RESCHEDULED ?? 'Reprogramada'])
+            ->whereIn('citas.estado', [Cita::STATUS_RESERVADA, Cita::STATUS_ATTENTION])
             ->where('disponibilidades.fecha', '>=', $now->toDateString())
             ->orderBy('disponibilidades.fecha', 'asc')
+            ->orderBy('disponibilidades.hora_inicio', 'asc')
+            ->select('citas.*')
             ->first();
-            
-        $diasProxima = $proximaCita ? $now->diffInDays(\Carbon\Carbon::parse($proximaCita->fecha), false) : 'N/A';
-        if ($diasProxima === 'N/A') $diasProxima = rand(1, 15);
 
+        $diasProxima = null;
+        if ($proximaCita && $proximaCita->disponibilidad?->fecha) {
+            $diasProxima = $now->startOfDay()->diffInDays(Carbon::parse($proximaCita->disponibilidad->fecha)->startOfDay(), false);
+        }
+
+        // Gastos totales: suma de totales registrados en citas realizadas
         $gastosTotales = Cita::where('paciente_id', $pacienteId)
-            ->whereIn('estado', [Cita::STATUS_COMPLETED ?? 'Realizada', 'Realizada'])
+            ->where('estado', Cita::STATUS_COMPLETED)
             ->sum('total');
-        if ($gastosTotales == 0) $gastosTotales = rand(1500, 4500);
 
+        // Terapias activas: especialistas con al menos una cita relevante (reservada/atención/realizada)
         $terapiasActivas = Cita::where('paciente_id', $pacienteId)
+            ->whereIn('estado', [Cita::STATUS_RESERVADA, Cita::STATUS_ATTENTION, Cita::STATUS_COMPLETED])
             ->distinct()
-            ->count('especialista_id'); 
-        if ($terapiasActivas == 0) $terapiasActivas = 1;
+            ->count('especialista_id');
 
         return [
             'current_period' => $period,
             'kpis' => [
-                'citas_asistidas' => $citasAsistidas,
+                'citas_asistidas' => (int) $citasAsistidas,
                 'dias_proxima'    => $diasProxima,
-                'gastos_totales'  => $gastosTotales,
-                'terapias_activas'=> $terapiasActivas,
+                'gastos_totales'  => (float) $gastosTotales,
+                'terapias_activas'=> (int) $terapiasActivas,
             ],
             'charts' => [],
         ];

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+// Email verification and explicit Request imports removed (not used)
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminReportController;
@@ -16,30 +17,40 @@ use App\Http\Controllers\ReceptionistController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\RoleActionController;
 
-Route::get('/', [DashboardController::class, 'index'])->name('landing');
+Route::group([], function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('landing');
 
-Route::get('/inicio', function () {
-    return view('dashboard');
-})->name('inicio');
+    Route::get('/inicio', function () {
+        return view('dashboard');
+    })->name('inicio');
 
-// Authentication Routes
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-    
-    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
-});
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    // Authentication Routes
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [AuthController::class, 'login']);
+        
+        Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+        // Throttle registration to avoid abuse
+        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+    });
+Route::match(['GET', 'POST'], '/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
+        Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+    });
+
+    // Email verification routes removed per request.
 
 // Soporte: reportar incidencia (cualquier usuario autenticado)
 Route::post('/soporte', [SoporteController::class, 'store'])->middleware('auth')->name('soporte.store');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-// Booking Flow (Protected by auth)
-Route::middleware('auth')->group(function () {
+    // Booking Flow (Protected by auth and book_appointments permission)
+    Route::middleware(['auth', 'action:book_appointments'])->group(function () {
     Route::get('/booking/service', [BookingController::class, 'selectService'])->name('booking.service');
     Route::get('/booking/specialist', [BookingController::class, 'selectSpecialist'])->name('booking.specialist');
     Route::get('/booking/schedule', [BookingController::class, 'schedule'])->name('booking.schedule');
@@ -51,8 +62,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/booking/lista-espera', [BookingController::class, 'joinWaitlist'])->name('booking.waitlist');
 });
 
-// Patient Portal
-Route::group(['middleware' => ['auth', 'role:patient'], 'prefix' => 'portal', 'as' => 'portal.'], function () {
+    // Patient Portal
+    Route::group(['middleware' => ['auth', 'role:patient', 'patient.session'], 'prefix' => 'portal', 'as' => 'portal.'], function () {
     Route::get('/', [CustomerPortalController::class, 'index'])->name('index');
     Route::get('/historial', [CustomerPortalController::class, 'history'])->name('history');
     Route::get('/soporte', [CustomerPortalController::class, 'soporte'])->name('soporte');
@@ -77,8 +88,8 @@ Route::group(['middleware' => ['auth', 'role:patient'], 'prefix' => 'portal', 'a
     Route::post('/reprogramar/{cita}', [CustomerPortalController::class, 'rescheduleStore'])->name('reschedule.store');
 });
 
-// Admin Routes
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->as('admin.')->group(function () {
+    // Admin Routes
+    Route::middleware(['auth', 'role:admin'])->prefix('admin')->as('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     // Notificaciones
@@ -132,13 +143,21 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->as('admin.')->group(
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
     Route::patch('/usuarios/{id}/estado', [UsuarioController::class, 'toggleEstado'])->name('usuarios.estado');
 
+    // Gestión de acciones por rol
+    Route::get('/roles', [RoleActionController::class, 'index'])->name('roles.index');
+    Route::put('/roles/{rol}', [RoleActionController::class, 'update'])->name('roles.update');
+
+    // Gestión de imágenes de landing pública
+    Route::get('/landing-images', [AdminController::class, 'landingImages'])->name('landing-images.index')->middleware('action:manage_site_content');
+    Route::post('/landing-images', [AdminController::class, 'updateLandingImages'])->name('landing-images.update')->middleware('action:manage_site_content');
+
     // Reportes y Listados
     Route::get('/pacientes', [AdminController::class, 'pacientesIndex'])->name('pacientes.index');
     Route::get('/citas', [AdminController::class, 'citasIndex'])->name('citas.index');
 });
 
-// Psychologist Routes
-Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->as('doctor.')->group(function () {
+    // Psychologist Routes
+    Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->as('doctor.')->group(function () {
     Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('dashboard');
     Route::get('/metricas', [DoctorController::class, 'metrics'])->name('metrics');
     Route::post('/recordatorios/enviar', [DoctorController::class, 'enviarRecordatorios'])->name('recordatorios.enviar');
@@ -188,30 +207,68 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->as('doctor.')->gro
     Route::put('/profile', [DoctorController::class, 'updateProfile'])->name('profile.update');
 });
 
-// Receptionist Routes
-Route::group(['middleware' => ['auth', 'role:receptionist'], 'prefix' => 'receptionist', 'as' => 'receptionist.'], function () {
+    // Receptionist Routes
+    Route::group(['middleware' => ['auth', 'role:receptionist'], 'prefix' => 'receptionist', 'as' => 'receptionist.'], function () {
     Route::get('/dashboard', [ReceptionistController::class, 'dashboard'])->name('dashboard');
-    Route::get('/booking/create', [ReceptionistController::class, 'createBooking'])->name('booking.create');
-    Route::post('/booking/store', [ReceptionistController::class, 'storeBooking'])->name('booking.store');
-    Route::get('/patients/search', [ReceptionistController::class, 'searchPatients'])->name('patients.search');
-    Route::get('/api/availability/search', [ReceptionistController::class, 'getAvailability']);
-    Route::get('/api/availability/dates', [ReceptionistController::class, 'getAvailableDates'])->name('availability.dates');
-    Route::get('/api/especialistas/filter', [ReceptionistController::class, 'getFilteredEspecialistas'])->name('especialistas.filter');
+    Route::get('/booking/create', [ReceptionistController::class, 'createBooking'])->name('booking.create')->middleware('action:book_appointments');
+    Route::post('/booking/store', [ReceptionistController::class, 'storeBooking'])->name('booking.store')->middleware('action:book_appointments');
+    Route::get('/patients/search', [ReceptionistController::class, 'searchPatients'])->name('patients.search')->middleware(['throttle:30,1', 'action:book_appointments']);
+    Route::post('/patients', [ReceptionistController::class, 'storePatient'])->name('patients.store')->middleware('action:register_patients');
+    Route::get('/api/availability/search', [ReceptionistController::class, 'getAvailability'])->middleware(['throttle:60,1', 'action:book_appointments']);
+    Route::get('/api/availability/dates', [ReceptionistController::class, 'getAvailableDates'])->name('availability.dates')->middleware(['throttle:60,1', 'action:book_appointments']);
+    Route::get('/api/especialistas/filter', [ReceptionistController::class, 'getFilteredEspecialistas'])->name('especialistas.filter')->middleware(['throttle:60,1', 'action:book_appointments']);
 
     // Notificaciones
     Route::patch('/notificaciones/leer', [ReceptionistController::class, 'marcarNotificacionesLeidas'])->name('notificaciones.leer');
 
-    // Reprogramación de citas (a solicitud del paciente por teléfono)
-    Route::get('/booking/reschedule/{cita}', [ReceptionistController::class, 'reschedule'])->name('booking.reschedule');
-});
+    // Reprogramación de citas (solicitud desde recepción): mostrar selector y almacenar solicitud
+    Route::get('/booking/reschedule/{cita}', [ReceptionistController::class, 'rescheduleCreate'])->name('booking.reschedule')->middleware('action:book_appointments');
+    Route::post('/booking/reschedule/{cita}', [ReceptionistController::class, 'rescheduleStore'])->name('booking.reschedule.store')->middleware('action:book_appointments');
 
-// Admin Routes
-Route::group(['middleware' => ['auth', 'role:admin'], 'prefix' => 'admin', 'as' => 'admin.'], function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    // Mirror admin pages accessible by actions when the receptionist role has them
+    // Reportes (si el recepcionista tiene view_reports)
+    Route::get('/reportes/finanzas', [AdminReportController::class, 'finanzas'])->name('reportes.finanzas')->middleware('action:reportes_finanzas');
+    Route::get('/reportes/desempeno', [AdminReportController::class, 'desempeno'])->name('reportes.desempeno')->middleware('action:reportes_desempeno');
+    Route::get('/reportes/ocupacion', [AdminReportController::class, 'ocupacion'])->name('reportes.ocupacion')->middleware('action:reportes_ocupacion');
+    Route::get('/reportes/control', [AdminReportController::class, 'control'])->name('reportes.control')->middleware('action:reportes_control');
+    Route::get('/reportes/auditoria', [AdminReportController::class, 'auditoria'])->name('reportes.auditoria')->middleware('action:reportes_auditoria');
+
+    // Gestión de Servicios (si el recepcionista tiene manage_services o la acción específica de servicios)
+    Route::get('/servicios', [AdminController::class, 'serviciosIndex'])->name('servicios.index')->middleware('action:manage_services,servicios_index');
+    Route::get('/servicios/crear', [AdminController::class, 'serviciosCreate'])->name('servicios.create')->middleware('action:servicios_create');
+    Route::post('/servicios', [AdminController::class, 'serviciosStore'])->name('servicios.store')->middleware('action:servicios_create');
+
+    // Gestión de Pacientes (mirror)
+    Route::get('/pacientes', [AdminController::class, 'pacientesIndex'])->name('pacientes.index')->middleware('action:pacientes_index');
+
+    // Gestión de Citas (mirror)
+    Route::get('/citas', [AdminController::class, 'citasIndex'])->name('citas.index')->middleware('action:citas_index');
+
+    // Gestión de Categorías (mirror)
+    Route::get('/categorias', [CategoriaController::class, 'index'])->name('categorias.index')->middleware('action:categorias_index');
+
+    // Lista de espera (mirror)
+    Route::get('/lista-espera', [ListaEsperaController::class, 'index'])->name('lista-espera.index')->middleware('action:lista_espera_index');
+
+    // Soporte (mirror)
+    Route::get('/soporte', [SoporteController::class, 'index'])->name('soporte.index')->middleware('action:soporte_index');
+
+    // Roles (mirror)
+    Route::get('/roles', [RoleActionController::class, 'index'])->name('roles.index')->middleware('action:roles_index');
+
+    // Gestión de Especialistas (si el recepcionista tiene manage_specialists o la acción específica de especialistas)
+    Route::get('/especialistas', [AdminController::class, 'especialistasIndex'])->name('especialistas.index')->middleware('action:manage_specialists,especialistas_index');
+
+    // Gestión de imágenes de landing pública
+    Route::get('/landing-images', [AdminController::class, 'landingImages'])->name('landing-images.index')->middleware('action:manage_site_content');
+    Route::put('/landing-images', [AdminController::class, 'updateLandingImages'])->name('landing-images.update')->middleware('action:manage_site_content');
+
+    // Gestión de Usuarios (si el recepcionista tiene manage_users o la acción específica de usuarios)
+    Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index')->middleware('action:manage_users,usuarios_index');
 });
 
 // Google Meet Integration
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth'])->group(function () {
     // Google OAuth
     Route::get('/google/auth', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.auth');
     Route::get('/google/auth/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('google.callback');
@@ -220,4 +277,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/meetings/create', [MeetingController::class, 'create'])->name('meetings.create');
     Route::post('/meetings', [MeetingController::class, 'store'])->name('meetings.store');
     Route::post('/meetings/generate/{citaId}', [MeetingController::class, 'generateForAppointment'])->name('meetings.generate');
+    });
 });

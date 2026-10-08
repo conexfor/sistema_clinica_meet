@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Panel de Administración · Sia' }}</title>
+    <title>{{ $title ?? 'Panel de Administración · ' . config('clinic.name') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,15 +24,13 @@
 </head>
 <body class="antialiased min-h-screen text-ink-900 bg-organic">
 
-    @include('admin.partials.nav', ['active' => $active ?? 'dashboard'])
+    @if(auth()->check() && auth()->user()->isReceptionist())
+        @include('receptionist.partials.nav', ['active' => $active ?? 'dashboard'])
+    @else
+        @include('admin.partials.nav', ['active' => $active ?? 'dashboard'])
+    @endif
 
     <main class="px-4 sm:px-8 py-8 max-w-screen-2xl mx-auto relative z-10">
-        @if (session('success'))
-            <div class="alert-auto-dismiss mb-6 flex items-center gap-3 rounded-2xl border border-sage-200 bg-sage-50 px-5 py-4 text-sage-800">
-                <svg class="w-5 h-5 flex-shrink-0 text-sage-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span class="text-sm font-medium">{{ session('success') }}</span>
-            </div>
-        @endif
         @if (session('error'))
             <div class="alert-auto-dismiss mb-6 flex items-center gap-3 rounded-2xl border border-sand-300 bg-sand-50 px-5 py-4 text-sand-800">
                 <svg class="w-5 h-5 flex-shrink-0 text-sand-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

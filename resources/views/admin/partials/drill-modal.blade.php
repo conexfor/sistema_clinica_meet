@@ -3,6 +3,8 @@
     // Los KPIs disparan la Lupa con:
     //   @click="$dispatch('open-drill', { metric: 'active_patients', title: 'Pacientes activos' })"
     $drillPeriod = $period ?? 'month';
+    $drillStart = request('fecha_inicio', request('start_date', ''));
+    $drillEnd = request('fecha_fin', request('end_date', ''));
 @endphp
 
 <div
@@ -15,6 +17,8 @@
         error: false,
         base: @js(url('admin/reportes/drill')),
         period: @js($drillPeriod),
+        startDate: @js($drillStart),
+        endDate: @js($drillEnd),
         async load(metric, title) {
             this.title = title;
             this.open = true;
@@ -23,7 +27,10 @@
             this.items = [];
             this.count = 0;
             try {
-                const res = await fetch(`${this.base}/${metric}?period=${this.period}`, {
+                const params = new URLSearchParams({ period: this.period });
+                if (this.startDate) params.set('fecha_inicio', this.startDate);
+                if (this.endDate) params.set('fecha_fin', this.endDate);
+                const res = await fetch(`${this.base}/${metric}?${params.toString()}`, {
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 if (!res.ok) throw new Error('bad response');

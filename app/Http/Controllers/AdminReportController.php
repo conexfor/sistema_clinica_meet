@@ -17,15 +17,28 @@ use Illuminate\Http\Request;
  */
 class AdminReportController extends Controller
 {
+    private function resolvePeriod(Request $request): array
+    {
+        $period = $request->get('period', 'month');
+        $startDate = $request->get('fecha_inicio', $request->get('start_date'));
+        $endDate = $request->get('fecha_fin', $request->get('end_date'));
+
+        if ($period === 'custom' && $startDate && $endDate) {
+            return ['period' => 'custom', 'start_date' => $startDate, 'end_date' => $endDate];
+        }
+
+        return ['period' => $period, 'start_date' => null, 'end_date' => null];
+    }
+
     /**
      * Finanzas: ingresos MoM, pacientes activos, retención, sesiones y modalidad.
      */
     public function finanzas(Request $request, FinanceReportService $service): \Illuminate\View\View
     {
-        $period = $request->get('period', 'month');
-        $stats = $service->getStats($period);
+        $filter = $this->resolvePeriod($request);
+        $stats = $service->getStats($filter['period'], $filter['start_date'], $filter['end_date']);
 
-        return view('admin.reportes.finanzas', compact('stats', 'period'));
+        return view('admin.reportes.finanzas', ['stats' => $stats, 'period' => $filter['period'], 'fecha_inicio' => $filter['start_date'], 'fecha_fin' => $filter['end_date']]);
     }
 
     /**
@@ -33,10 +46,10 @@ class AdminReportController extends Controller
      */
     public function desempeno(Request $request, PerformanceReportService $service): \Illuminate\View\View
     {
-        $period = $request->get('period', 'month');
-        $stats = $service->getStats($period);
+        $filter = $this->resolvePeriod($request);
+        $stats = $service->getStats($filter['period'], $filter['start_date'], $filter['end_date']);
 
-        return view('admin.reportes.desempeno', compact('stats', 'period'));
+        return view('admin.reportes.desempeno', ['stats' => $stats, 'period' => $filter['period'], 'fecha_inicio' => $filter['start_date'], 'fecha_fin' => $filter['end_date']]);
     }
 
     /**
@@ -44,10 +57,10 @@ class AdminReportController extends Controller
      */
     public function ocupacion(Request $request, OccupancyReportService $service): \Illuminate\View\View
     {
-        $period = $request->get('period', 'month');
-        $stats = $service->getStats($period);
+        $filter = $this->resolvePeriod($request);
+        $stats = $service->getStats($filter['period'], $filter['start_date'], $filter['end_date']);
 
-        return view('admin.reportes.ocupacion', compact('stats', 'period'));
+        return view('admin.reportes.ocupacion', ['stats' => $stats, 'period' => $filter['period'], 'fecha_inicio' => $filter['start_date'], 'fecha_fin' => $filter['end_date']]);
     }
 
     /**
@@ -55,10 +68,10 @@ class AdminReportController extends Controller
      */
     public function control(Request $request, ControlPanelService $service): \Illuminate\View\View
     {
-        $period = $request->get('period', 'month');
-        $stats = $service->getStats($period);
+        $filter = $this->resolvePeriod($request);
+        $stats = $service->getStats($filter['period'], $filter['start_date'], $filter['end_date']);
 
-        return view('admin.reportes.control', compact('stats', 'period'));
+        return view('admin.reportes.control', ['stats' => $stats, 'period' => $filter['period'], 'fecha_inicio' => $filter['start_date'], 'fecha_fin' => $filter['end_date']]);
     }
 
     /**
@@ -91,8 +104,8 @@ class AdminReportController extends Controller
     {
         abort_unless(in_array($metric, DrillDownService::METRICS, true), 404);
 
-        $period = $request->get('period', 'month');
+        $filter = $this->resolvePeriod($request);
 
-        return response()->json($service->resolve($metric, $period));
+        return response()->json($service->resolve($metric, $filter['period'], $filter['start_date'], $filter['end_date']));
     }
 }

@@ -59,9 +59,9 @@ class FinanceReportService
         return $this->revenueService->revenueForCitas($citas);
     }
 
-    public function getStats(string $period): array
+    public function getStats(string $period, ?string $startDate = null, ?string $endDate = null): array
     {
-        $p = ReportPeriod::make($period);
+        $p = ReportPeriod::make($period, $startDate, $endDate);
 
         // --- Ingresos brutos y crecimiento vs período anterior ---
         $revenue     = $this->revenueEntre($p->start, $p->end);
@@ -71,8 +71,8 @@ class FinanceReportService
             : ($revenue > 0 ? 100 : 0);
 
         // --- Sesiones realizadas en el período ---
-        $sessions     = (clone $this->realizadasEntre($p->start, $p->end))->count();
-        $prevSessions = (clone $this->realizadasEntre($p->prevStart, $p->prevEnd))->count();
+        $sessions     = (clone $this->realizadasEntre($p->start, $p->end))->sum('citas.cantidad_sesiones');
+        $prevSessions = (clone $this->realizadasEntre($p->prevStart, $p->prevEnd))->sum('citas.cantidad_sesiones');
         $sessionsGrowth = $prevSessions > 0
             ? (($sessions - $prevSessions) / $prevSessions) * 100
             : ($sessions > 0 ? 100 : 0);
@@ -86,7 +86,7 @@ class FinanceReportService
 
         // --- Tasa de retención: pacientes con ≥2 sesiones realizadas / pacientes con ≥1 ---
         $sesionesPorPaciente = Cita::where('estado', Cita::STATUS_COMPLETED)
-            ->select('paciente_id', DB::raw('COUNT(*) as total'))
+            ->select('paciente_id', DB::raw('SUM(cantidad_sesiones) as total'))
             ->groupBy('paciente_id')
             ->pluck('total');
         $conPrimera  = $sesionesPorPaciente->count();
@@ -101,7 +101,7 @@ class FinanceReportService
         $modalidades = $citasModal->groupBy('modalidad_id')->map(fn ($grupo, $modalidadId) => [
             'nombre'  => $modalidadNombres[$modalidadId] ?? 'Sin modalidad',
             'revenue' => $this->revenueService->revenueForCitas($grupo),
-            'count'   => $grupo->count(),
+            'count'   => $grupo->sum('cantidad_sesiones'),
         ])->values();
 
         if ($modalidades->isEmpty()) {

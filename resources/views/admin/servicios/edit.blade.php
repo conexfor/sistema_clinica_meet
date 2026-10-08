@@ -16,7 +16,7 @@
     <form action="{{ route('admin.servicios.update', $servicio->id) }}" method="POST" class="space-y-8">
         @csrf
         @method('PUT')
-        @include('admin.servicios._form', ['submitLabel' => 'Guardar cambios', 'submitClass' => 'btn-accent'])
+        @include('admin.servicios._form', ['submitLabel' => 'Actualizar', 'submitClass' => 'btn-accent'])
     </form>
 </div>
 @endsection

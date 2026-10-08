@@ -1,4 +1,4 @@
-@extends('components.layouts.app')
+@extends(auth()->check() && auth()->user()->isReceptionist() ? 'components.layouts.receptionist' : 'components.layouts.app')
 
 @push('styles')
 <style>

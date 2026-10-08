@@ -27,6 +27,8 @@ class SolicitudReprogramacion extends Model
         'fecha_solicitada',
         'hora_solicitada',
         'motivo',
+        'solicitante',
+        'solicitante_usuario_id',
         'estado',
         'respuesta_especialista',
         'respondida_at',

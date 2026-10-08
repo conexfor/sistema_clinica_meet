@@ -7,17 +7,18 @@
     <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
         <div>
             <h1 class="font-serif text-3xl md:text-4xl text-sage-900 dark:text-cream-100">Gestión de especialistas</h1>
-            <p class="text-ink-500 dark:text-sage-300 mt-1">Administra el equipo profesional de Sia.</p>
+            <p class="text-ink-500 dark:text-sage-300 mt-1">Administra el equipo profesional de {{ config('clinic.name') }}.</p>
         </div>
-        <a href="{{ route('admin.especialistas.create') }}" class="btn-primary !rounded-2xl px-8 py-4 text-sm">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            Nuevo especialista
-        </a>
+        @if(auth()->user()->hasAction('especialistas_create'))
+            <a href="{{ route('admin.especialistas.create') }}" class="btn-primary !rounded-2xl px-8 py-4 text-sm">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                Nuevo especialista
+            </a>
+        @endif
     </div>
 
     @if(session('success'))
-        <div class="mb-8 bg-sage-50 border border-sage-200 text-sage-700 px-6 py-4 rounded-2xl font-bold flex items-center gap-3 alert-auto-dismiss">
-            <svg class="w-5 h-5 text-sage-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+        <div class="mb-6 rounded-3xl border border-sage-200 bg-sage-50/80 p-5 text-sage-900 shadow-sm">
             {{ session('success') }}
         </div>
     @endif
@@ -53,7 +54,9 @@
                 </div>
 
                 <div class="flex items-center gap-3 pt-6 border-t border-cream-300 dark:border-sage-700 relative z-10">
-                    <a href="{{ route('admin.especialistas.edit', $especialista->id) }}" class="flex-1 py-3 bg-cream-100 dark:bg-sage-800 text-ink-700 dark:text-cream-100 rounded-xl font-bold text-xs hover:bg-sage-50 dark:hover:bg-sage-700 transition-colors text-center">Editar perfil</a>
+                    @if(auth()->user()->hasAction('especialistas_edit'))
+                        <a href="{{ route('admin.especialistas.edit', $especialista->id) }}" class="flex-1 py-3 bg-cream-100 dark:bg-sage-800 text-ink-700 dark:text-cream-100 rounded-xl font-bold text-xs hover:bg-sage-50 dark:hover:bg-sage-700 transition-colors text-center">Editar perfil</a>
+                    @endif
                 </div>
             </div>
         @empty

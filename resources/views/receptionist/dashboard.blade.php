@@ -15,22 +15,25 @@
                     <span class="w-2 h-2 rounded-full bg-sage-500 animate-pulse mr-2"></span>
                     <span class="text-[13px] font-bold text-ink-700 dark:text-sage-200">Hoy: {{ now()->format('d M, Y') }}</span>
                 </div>
+                @if(auth()->user()->hasAction('book_appointments'))
                 <a href="{{ route('receptionist.booking.create') }}" class="btn-primary !py-2.5 text-sm whitespace-nowrap">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                     Nueva reserva
                 </a>
+                @endif
             </div>
         </div>
 
         <!-- KPIs -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-8">
             @php
                 $kpis = [
                     ['t' => 'Agendadas hoy', 'v' => $stats['kpis']['agendadas_hoy'] ?? 0, 'sub' => 'Nuevos ingresos hoy', 'c' => 'sage', 'i' => 'M12 6v6m0 0v6m0-6h6m-6 0H6'],
                     ['t' => 'Realizadas (mes)', 'v' => $stats['kpis']['realizadas_mes'] ?? 0, 'sub' => 'Atenciones completadas', 'c' => 'sage', 'i' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
                     ['t' => 'Total citas (mes)', 'v' => $stats['kpis']['total_citas_mes'] ?? 0, 'sub' => 'Agendadas este período', 'c' => 'sand', 'i' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
-                    ['t' => 'Doctores disponibles', 'v' => $stats['kpis']['doctores_disp'] ?? 0, 'sub' => 'Con espacios hoy', 'c' => 'sand', 'i' => 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ['t' => 'Especialistas disponibles', 'v' => $stats['kpis']['especialistas_disp'] ?? 0, 'sub' => 'Con espacios hoy', 'c' => 'sand', 'i' => 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
                     ['t' => 'Canceladas (mes)', 'v' => $stats['kpis']['canceladas_mes'] ?? 0, 'sub' => 'Bajas registradas', 'c' => 'sand', 'i' => 'M6 18L18 6M6 6l12 12'],
+                    ['t' => 'Cobros (mes)', 'v' => 'S/ ' . number_format($stats['kpis']['cobros_mes'] ?? 0, 2), 'sub' => 'Ingresos cobrados', 'c' => 'sage', 'i' => 'M12 8v8m0 0v8m0-8h8m-8 0H4'],
                 ];
             @endphp
             @foreach ($kpis as $k)
@@ -58,7 +61,7 @@
         <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
             <a href="{{ route('receptionist.dashboard') }}" class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap {{ $is_all ? $pillOn : $pillOff }}">Todas las citas</a>
             <a href="{{ route('receptionist.dashboard', ['fecha_desde' => now()->toDateString(), 'fecha_hasta' => now()->toDateString()]) }}" class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap {{ $is_hoy ? $pillOn : $pillOff }}">Activas hoy</a>
-            <a href="{{ route('receptionist.dashboard', ['disponibles_hoy' => 1]) }}" class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap {{ $is_disp ? $pillOn : $pillOff }}">Médicos disponibles</a>
+            <a href="{{ route('receptionist.dashboard', ['disponibles_hoy' => 1]) }}" class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap {{ $is_disp ? $pillOn : $pillOff }}">Especialistas disponibles</a>
         </div>
 
         <!-- Gráfico -->
@@ -87,7 +90,7 @@
                     <thead>
                         <tr class="bg-cream-100 dark:bg-sage-800">
                             <th class="px-6 py-4 text-xs font-semibold text-ink-500 dark:text-sage-300 uppercase tracking-wider whitespace-nowrap">Paciente</th>
-                            <th class="px-6 py-4 text-xs font-semibold text-ink-500 dark:text-sage-300 uppercase tracking-wider whitespace-nowrap">Médico</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-ink-500 dark:text-sage-300 uppercase tracking-wider whitespace-nowrap">Especialista</th>
                             <th class="px-6 py-4 text-xs font-semibold text-ink-500 dark:text-sage-300 uppercase tracking-wider whitespace-nowrap">Fecha / hora</th>
                             <th class="px-6 py-4 text-xs font-semibold text-ink-500 dark:text-sage-300 uppercase tracking-wider whitespace-nowrap text-right">Total</th>
                             <th class="px-6 py-4 text-xs font-semibold text-ink-500 dark:text-sage-300 uppercase tracking-wider whitespace-nowrap text-center">Estado</th>

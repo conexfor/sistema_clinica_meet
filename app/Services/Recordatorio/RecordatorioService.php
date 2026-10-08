@@ -66,9 +66,9 @@ class RecordatorioService
                 "Te recordamos tu próxima sesión:\n" .
                 "📅 {$fecha}\n🕒 {$hora}\n" .
                 "Profesional: Ps. " . ($doctor->nombre ?? 'tu especialista') . "\n\n" .
-                "Si no puedes asistir, solicita una reprogramación desde tu portal.\n\nEquipo Sia.",
+                "Si no puedes asistir, solicita una reprogramación desde tu portal.\n\nEquipo " . config('clinic.name') . ".",
                 function ($message) use ($paciente) {
-                    $message->to($paciente->email)->subject('Recordatorio de tu sesión en Sia');
+                    $message->to($paciente->email)->subject('Recordatorio de tu sesión en ' . config('clinic.name'));
                 }
             );
         }

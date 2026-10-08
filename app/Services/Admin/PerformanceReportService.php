@@ -17,16 +17,16 @@ class PerformanceReportService
     /** Días sin actividad para marcar a un especialista como inactivo. */
     private const INACTIVE_DAYS = 15;
 
-    public function getStats(string $period): array
+    public function getStats(string $period, ?string $startDate = null, ?string $endDate = null): array
     {
-        $p = ReportPeriod::make($period);
+        $p = ReportPeriod::make($period, $startDate, $endDate);
 
         $especialistas = Especialista::with('usuario')->get();
 
         // Citas del período por especialista y estado (para volumen y cancelación).
         $citasPeriodo = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->whereBetween('disponibilidades.fecha', [$p->start, $p->end])
-            ->select('citas.especialista_id', 'citas.estado', DB::raw('COUNT(*) as total'))
+            ->select('citas.especialista_id', 'citas.estado', DB::raw('SUM(citas.cantidad_sesiones) as total'))
             ->groupBy('citas.especialista_id', 'citas.estado')
             ->get()
             ->groupBy('especialista_id');
@@ -40,7 +40,7 @@ class PerformanceReportService
 
         // Conversión (histórico): pacientes con ≥2 sesiones realizadas vs con ≥1, por especialista.
         $sesionesPacDoc = Cita::where('estado', Cita::STATUS_COMPLETED)
-            ->select('especialista_id', 'paciente_id', DB::raw('COUNT(*) as total'))
+            ->select('especialista_id', 'paciente_id', DB::raw('SUM(cantidad_sesiones) as total'))
             ->groupBy('especialista_id', 'paciente_id')
             ->get()
             ->groupBy('especialista_id');

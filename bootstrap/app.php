@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'action' => \App\Http\Middleware\ActionMiddleware::class,
+            'patient.session' => \App\Http\Middleware\PatientSessionMiddleware::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {

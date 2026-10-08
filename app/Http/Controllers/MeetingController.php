@@ -82,7 +82,7 @@ class MeetingController extends Controller
             // Datos para el evento de calendar
             $meetingData = [
                 'title'       => 'Sesión Terapéutica: ' . ($cita->paciente->nombre ?? 'Paciente'),
-                'description' => 'Sesión virtual agendada vía Sia.',
+                'description' => 'Sesión virtual agendada vía ' . config('clinic.name') . '.',
                 'start_time'  => $cita->disponibilidad->fecha->toDateString() . ' ' . $cita->disponibilidad->hora_inicio,
                 'end_time'    => $cita->disponibilidad->fecha->toDateString() . ' ' . $cita->disponibilidad->hora_fin,
             ];

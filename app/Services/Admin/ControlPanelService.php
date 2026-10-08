@@ -17,19 +17,19 @@ class ControlPanelService
     private const SPIKE_FACTOR = 1.5;
     private const SPIKE_MIN    = 3;
 
-    public function getStats(string $period): array
+    public function getStats(string $period, ?string $startDate = null, ?string $endDate = null): array
     {
-        $p = ReportPeriod::make($period);
+        $p = ReportPeriod::make($period, $startDate, $endDate);
 
         // --- Ausentismo del período (inasistencias reales: estado no_asistio) ---
         $totalCitas = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->whereBetween('disponibilidades.fecha', [$p->start, $p->end])
-            ->count();
+            ->sum('citas.cantidad_sesiones');
 
         $noShows = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
             ->whereBetween('disponibilidades.fecha', [$p->start, $p->end])
             ->where('citas.estado', Cita::STATUS_NO_SHOW)
-            ->count();
+            ->sum('citas.cantidad_sesiones');
 
         $noShowRate = $totalCitas > 0 ? ($noShows / $totalCitas) * 100 : 0;
 

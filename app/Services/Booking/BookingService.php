@@ -374,7 +374,7 @@ class BookingService
                 $slotsToReserve->last(),
                 $tipoConsulta,
                 $cantidadSesiones,
-                'Consulta psicológica programada vía Sia.'
+                'Consulta psicológica programada vía ' . config('clinic.name') . '.'
             );
 
             return $cita;

@@ -19,8 +19,7 @@
 <div class="px-4 sm:px-8 pt-4 pb-2 z-50 sticky top-0">
     <nav class="w-full max-w-7xl mx-auto bg-white/85 dark:bg-sage-900/85 backdrop-blur-xl shadow-soft rounded-2xl px-4 sm:px-6 py-3 flex items-center justify-between border border-cream-300 dark:border-sage-700">
         <a href="{{ route('landing') }}" class="flex items-center gap-3">
-            <img src="{{ asset('images/logo_sia.jpeg') }}" alt="Sia" class="w-10 h-10 rounded-xl object-contain p-1.5 bg-white ring-1 ring-cream-300 dark:ring-sage-700">
-            <span class="text-xl font-serif font-semibold tracking-tight text-sage-800 dark:text-cream-100">Sia<span class="text-sand-500">.</span></span>
+            <span class="text-xl font-serif font-semibold tracking-tight text-sage-800 dark:text-cream-100">{{ config('clinic.name') }}<span class="text-sand-500">.</span></span>
         </a>
 
         <div class="hidden lg:flex items-center gap-1">
@@ -33,15 +32,6 @@
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <!-- Toggle de tema -->
-            <button x-data
-                    @click="document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');"
-                    aria-label="Cambiar tema"
-                    class="w-10 h-10 rounded-full flex items-center justify-center text-sage-600 dark:text-sand-300 hover:bg-sage-50 dark:hover:bg-sage-800 transition-colors">
-                <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m8.66-9h-1M4.34 12h-1m14.14 5.66l-.7-.7M6.34 6.34l-.7-.7m12.02 0l-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-            </button>
-
             <!-- Campanita de notificaciones -->
             <div x-data="{ openN: false }" class="relative">
                 <button @click="openN = !openN" @click.away="openN = false" aria-label="Notificaciones"
@@ -88,17 +78,22 @@
                 <div @click="open = !open" @click.away="open = false" class="flex items-center gap-3 cursor-pointer group">
                     <div class="text-right hidden sm:block">
                         <p class="text-[13px] font-bold text-ink-900 dark:text-cream-100 group-hover:text-sage-700 dark:group-hover:text-sage-300 transition-colors">{{ auth()->user()->nombre ?? 'Paciente' }}</p>
-                        <p class="text-[11px] font-semibold text-ink-500 dark:text-sage-400">Paciente</p>
+                        <p class="text-[11px] font-semibold text-ink-500 dark:text-sage-400">{{ auth()->user()->email ?? 'paciente@conexfor.com' }}</p>
                     </div>
                     <div class="w-9 h-9 rounded-full bg-gradient-to-br from-sage-500 to-sage-700 text-white flex items-center justify-center text-sm font-bold ring-2 ring-white shadow-sm">
                         {{ strtoupper(substr(auth()->user()->nombre ?? 'P', 0, 1)) }}
                     </div>
                 </div>
-                <div x-show="open" x-cloak x-transition class="absolute right-0 mt-3 w-52 surface !rounded-2xl p-2 z-50">
+                <div x-show="open" x-cloak x-transition class="absolute right-0 mt-3 w-60 surface !rounded-2xl p-2 z-50">
                     <a href="{{ route('portal.profile') }}" class="w-full text-left px-4 py-2.5 text-sm text-ink-700 dark:text-sage-200 hover:bg-sage-50 dark:hover:bg-sage-800 hover:text-sage-700 rounded-xl transition-colors flex items-center gap-2.5 font-medium">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                         Mi perfil
                     </a>
+                    <button type="button" @click="document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');" class="w-full text-left px-4 py-2.5 text-sm text-ink-700 dark:text-sage-200 hover:bg-sage-50 dark:hover:bg-sage-800 hover:text-sage-700 rounded-xl transition-colors flex items-center gap-2.5 font-medium">
+                        <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m8.66-9h-1M4.34 12h-1m14.14 5.66l-.7-.7M6.34 6.34l-.7-.7m12.02 0l-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                        Modo oscuro / claro
+                    </button>
                     <div class="h-px bg-cream-300 dark:bg-sage-700 my-1.5 mx-2"></div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

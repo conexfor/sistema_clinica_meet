@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Models\Cita;
+use Carbon\Carbon;
 
 /**
  * DrillDownService
@@ -16,25 +17,31 @@ class DrillDownService
 
     private const LIMIT = 150;
 
-    public function resolve(string $metric, string $period): array
+    public function resolve(string $metric, string $period, ?string $startDate = null, ?string $endDate = null): array
     {
         return match ($metric) {
-            'active_patients' => $this->activePatients(),
-            'sessions'        => $this->sessions($period),
-            'no_shows'        => $this->noShows($period),
-            'cancellations'   => $this->cancellations(),
+            'active_patients' => $this->activePatients($startDate, $endDate),
+            'sessions'        => $this->sessions($period, $startDate, $endDate),
+            'no_shows'        => $this->noShows($period, $startDate, $endDate),
+            'cancellations'   => $this->cancellations($startDate, $endDate),
             default           => ['count' => 0, 'items' => []],
         };
     }
 
     /** Pacientes con ≥1 sesión (realizada/confirmada) en los últimos 30 días. */
-    private function activePatients(): array
+    private function activePatients(?string $startDate = null, ?string $endDate = null): array
     {
-        $citas = Cita::with(['paciente', 'especialista.usuario', 'disponibilidad'])
+        $query = Cita::with(['paciente', 'especialista.usuario', 'disponibilidad'])
             ->whereIn('citas.estado', [Cita::STATUS_COMPLETED, Cita::STATUS_RESERVADA])
-            ->join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
-            ->where('disponibilidades.fecha', '>=', now()->subDays(30)->startOfDay())
-            ->orderByDesc('disponibilidades.fecha')
+            ->join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('disponibilidades.fecha', [$startDate, $endDate]);
+        } else {
+            $query->where('disponibilidades.fecha', '>=', now()->subDays(30)->startOfDay());
+        }
+
+        $citas = $query->orderByDesc('disponibilidades.fecha')
             ->select('citas.*')
             ->get()
             ->unique('paciente_id')
@@ -50,9 +57,9 @@ class DrillDownService
     }
 
     /** Sesiones realizadas dentro del período. */
-    private function sessions(string $period): array
+    private function sessions(string $period, ?string $startDate = null, ?string $endDate = null): array
     {
-        $p = ReportPeriod::make($period);
+        $p = ReportPeriod::make($period, $startDate, $endDate);
 
         $citas = Cita::with(['paciente', 'especialista.usuario', 'disponibilidad'])
             ->where('citas.estado', Cita::STATUS_COMPLETED)
@@ -69,13 +76,13 @@ class DrillDownService
             'extra'     => 'S/ ' . number_format((float) $c->total, 0),
         ])->values();
 
-        return ['count' => $items->count(), 'items' => $items];
+        return ['count' => $citas->sum('cantidad_sesiones'), 'items' => $items];
     }
 
     /** Inasistencias reales (estado no_asistio) dentro del período. */
-    private function noShows(string $period): array
+    private function noShows(string $period, ?string $startDate = null, ?string $endDate = null): array
     {
-        $p = ReportPeriod::make($period);
+        $p = ReportPeriod::make($period, $startDate, $endDate);
 
         $citas = Cita::with(['paciente', 'especialista.usuario', 'disponibilidad'])
             ->where('citas.estado', Cita::STATUS_NO_SHOW)
@@ -95,13 +102,19 @@ class DrillDownService
         return ['count' => $items->count(), 'items' => $items];
     }
 
-    /** Cancelaciones registradas en los últimos 7 días (para la alerta de picos). */
-    private function cancellations(): array
+    /** Cancelaciones registradas en los últimos 7 días o en el rango personalizado indicado. */
+    private function cancellations(?string $startDate = null, ?string $endDate = null): array
     {
-        $citas = Cita::with(['paciente', 'especialista.usuario', 'disponibilidad'])
-            ->where('estado', Cita::STATUS_CANCELLED)
-            ->whereBetween('updated_at', [now()->subDays(7), now()])
-            ->orderByDesc('updated_at')
+        $query = Cita::with(['paciente', 'especialista.usuario', 'disponibilidad'])
+            ->where('estado', Cita::STATUS_CANCELLED);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('updated_at', [Carbon::parse($startDate)->startOfDay(), Carbon::parse($endDate)->endOfDay()]);
+        } else {
+            $query->whereBetween('updated_at', [now()->subDays(7), now()]);
+        }
+
+        $citas = $query->orderByDesc('updated_at')
             ->limit(self::LIMIT)
             ->get();
 

@@ -75,32 +75,42 @@ class AdminService
         $periodQuery = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
                           ->whereBetween('disponibilidades.fecha', [$startDate, $endDate]);
 
-        $totalCitas = (clone $periodQuery)->count();
-        $noShows = (clone $periodQuery)->where('estado', Cita::STATUS_NO_SHOW)->count();
+        $totalCitas = (clone $periodQuery)->sum('citas.cantidad_sesiones');
+        $noShows = (clone $periodQuery)->where('estado', Cita::STATUS_NO_SHOW)->sum('citas.cantidad_sesiones');
         $noShowRate = $totalCitas > 0 ? ($noShows / $totalCitas) * 100 : 0;
         
-        // Pending Sessions (Global or future sessions)
-        $pendingSessions = Cita::where('estado', Cita::STATUS_RESERVADA)->count();
+        // Pending Sessions (upcoming future sessions, reserved or in attention)
+        $pendingSessions = Cita::join('disponibilidades', 'citas.disponibilidad_id', '=', 'disponibilidades.id')
+            ->whereIn('citas.estado', [Cita::STATUS_RESERVADA, Cita::STATUS_ATTENTION])
+            ->where('disponibilidades.fecha', '>=', now()->startOfDay())
+            ->sum('citas.cantidad_sesiones');
         
         // Average Rating
         $avgRating = (clone $query)->where('calificacion', '>', 0)->avg('calificacion') ?? 0;
         
         // 2. Chart Data: Rendimiento por servicio real (ingresos con precio efectivo)
         $citasChart = (clone $revenueQuery)->get(['citas.especialista_id', 'citas.servicio_id', 'citas.duracion_minutos', 'citas.total']);
-        $serviciosNombre = \App\Models\Servicio::pluck('nombre', 'id');
+        $serviciosNombre = \App\Models\Servicio::active()->pluck('nombre', 'id');
 
         $porServicio = $citasChart->groupBy(fn ($c) => $serviciosNombre[$c->servicio_id] ?? 'Sin servicio');
 
-        $serviceRevenue = $porServicio
-            ->map(fn ($grupo) => round($this->revenueService->revenueForCitas($grupo), 2))
-            ->toArray();
-        $serviceVolume = $porServicio
-            ->map(fn ($grupo) => $grupo->count())
+        $serviceRevenue = $serviciosNombre
+            ->mapWithKeys(fn ($nombre, $servicioId) => [$nombre => 0])
+            ->merge($porServicio->map(fn ($grupo) => round($this->revenueService->revenueForCitas($grupo), 2))->toArray())
             ->toArray();
 
-        if (empty($serviceRevenue)) {
-            $serviceRevenue = ['Sin Datos' => 0];
-            $serviceVolume = ['Sin Datos' => 0];
+        $serviceVolume = $serviciosNombre
+            ->mapWithKeys(fn ($nombre, $servicioId) => [$nombre => 0])
+            ->merge($porServicio->map(fn ($grupo) => $grupo->sum('cantidad_sesiones'))->toArray())
+            ->toArray();
+
+        if (empty($serviceRevenue) || array_sum($serviceRevenue) === 0) {
+            $serviceRevenue = $serviciosNombre->isEmpty()
+                ? ['Sin Datos' => 0]
+                : $serviciosNombre->mapWithKeys(fn ($nombre) => [$nombre => 0])->toArray();
+            $serviceVolume = $serviciosNombre->isEmpty()
+                ? ['Sin Datos' => 0]
+                : $serviciosNombre->mapWithKeys(fn ($nombre) => [$nombre => 0])->toArray();
         }
 
         // 3. Recent Appointments Table

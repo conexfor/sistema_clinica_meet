@@ -29,7 +29,7 @@ class DemoDataSeeder extends Seeder
         Usuario::updateOrCreate(
             ['email' => 'admin@clinica.com'],
             [
-                'nombre' => 'Admin Sia',
+                'nombre' => 'Admin Conexfor',
                 'password' => Hash::make('password'),
                 'rol_id' => $adminId,
             ]
@@ -39,7 +39,7 @@ class DemoDataSeeder extends Seeder
         Usuario::updateOrCreate(
             ['email' => 'recepcion@clinica.com'],
             [
-                'nombre' => 'Recepcionista Sia',
+                'nombre' => 'Recepcionista Conexfor',
                 'password' => Hash::make('password'),
                 'rol_id' => $receptionistId,
             ]

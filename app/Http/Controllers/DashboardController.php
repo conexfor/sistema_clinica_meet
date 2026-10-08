@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LandingImage;
 use App\Services\Dashboard\DashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,8 @@ class DashboardController extends Controller
         // Si no está autenticado, mostrar la landing page pública
         if (!$user) {
             $stats = $this->dashboardService->getDashboardStats();
-            return view('dashboard', compact('stats'));
+            $landingImages = LandingImage::orderBy('sort_order')->get();
+            return view('dashboard', compact('stats', 'landingImages'));
         }
 
         // Redirigir según el rol del usuario autenticado
@@ -39,6 +41,7 @@ class DashboardController extends Controller
 
         // Fallback genérico para otros roles o usuarios sin rol específico
         $stats = $this->dashboardService->getDashboardStats();
-        return view('dashboard', compact('stats'));
+        $landingImages = LandingImage::orderBy('sort_order')->get();
+        return view('dashboard', compact('stats', 'landingImages'));
     }
 }

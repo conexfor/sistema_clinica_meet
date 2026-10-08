@@ -24,9 +24,9 @@ class UsuarioSeeder extends Seeder
 
         // --- ADMINISTRADOR ---
         Usuario::updateOrCreate(
-            ['email' => 'admin@sia.com'],
+            ['email' => 'admin@conexfor.com'],
             [
-                'nombre'   => 'Administrador Sia',
+                'nombre'   => 'Administrador Conexfor',
                 'telefono' => '999000001',
                 'password' => Hash::make('password'),
                 'rol_id'   => $roles[Usuario::ROL_ADMIN] ?? null,
@@ -35,9 +35,9 @@ class UsuarioSeeder extends Seeder
 
         // --- RECEPCIONISTA ---
         Usuario::updateOrCreate(
-            ['email' => 'recepcion@sia.com'],
+            ['email' => 'recepcion@conexfor.com'],
             [
-                'nombre'   => 'Recepción Sia',
+                'nombre'   => 'Recepción Conexfor',
                 'telefono' => '999000002',
                 'password' => Hash::make('password'),
                 'rol_id'   => $roles[Usuario::ROL_RECEPTIONIST] ?? null,
@@ -46,7 +46,7 @@ class UsuarioSeeder extends Seeder
 
         // --- DOCTOR / ESPECIALISTA ---
         $doctor = Usuario::updateOrCreate(
-            ['email' => 'doctor@sia.com'],
+            ['email' => 'doctor@conexfor.com'],
             [
                 'nombre'   => 'Dra. Elena Salazar',
                 'telefono' => '999000003',
@@ -66,7 +66,7 @@ class UsuarioSeeder extends Seeder
 
         // --- PACIENTE ---
         $paciente = Usuario::updateOrCreate(
-            ['email' => 'paciente@sia.com'],
+            ['email' => 'paciente@conexfor.com'],
             [
                 'nombre'   => 'Juan Pérez',
                 'telefono' => '999000004',
@@ -87,10 +87,10 @@ class UsuarioSeeder extends Seeder
         $this->command->table(
             ['Rol', 'Email', 'Clave'],
             [
-                ['Administrador', 'admin@sia.com', 'password'],
-                ['Recepcionista', 'recepcion@sia.com', 'password'],
-                ['Doctor',        'doctor@sia.com', 'password'],
-                ['Paciente',      'paciente@sia.com', 'password'],
+                ['Administrador', 'admin@conexfor.com', 'password'],
+                ['Recepcionista', 'recepcion@conexfor.com', 'password'],
+                ['Doctor',        'doctor@conexfor.com', 'password'],
+                ['Paciente',      'paciente@conexfor.com', 'password'],
             ]
         );
     }

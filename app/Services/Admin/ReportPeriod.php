@@ -32,9 +32,23 @@ class ReportPeriod
         'year'       => 'Año actual',
     ];
 
-    public function __construct(string $period)
+    public function __construct(string $period, ?string $startDate = null, ?string $endDate = null)
     {
         $now = Carbon::now();
+
+        if ($period === 'custom' && $startDate && $endDate) {
+            $this->key = 'custom';
+            $this->start = Carbon::parse($startDate)->startOfDay();
+            $this->end = Carbon::parse($endDate)->endOfDay();
+            $this->label = $this->start->format('d/m/Y') . ' - ' . $this->end->format('d/m/Y');
+
+            $lengthInDays = $this->start->diffInDays($this->end) + 1;
+            $this->prevEnd = $this->start->copy()->subDay()->endOfDay();
+            $this->prevStart = $this->prevEnd->copy()->subDays($lengthInDays - 1)->startOfDay();
+
+            return;
+        }
+
         $this->key = array_key_exists($period, self::OPTIONS) ? $period : 'month';
         $this->label = self::OPTIONS[$this->key];
 
@@ -60,8 +74,8 @@ class ReportPeriod
         $this->prevStart = $this->prevEnd->copy()->subDays($lengthInDays - 1)->startOfDay();
     }
 
-    public static function make(string $period): self
+    public static function make(string $period, ?string $startDate = null, ?string $endDate = null): self
     {
-        return new self($period);
+        return new self($period, $startDate, $endDate);
     }
 }

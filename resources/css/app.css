@@ -6,7 +6,7 @@
 @source '../**/*.js';
 
 /* ==========================================================================
-   SIA · Sistema de diseño — Clínica Psicológica
+   Conexfor · Sistema de diseño — Clínica Psicológica
    Identidad: "Salvia & Arena cálida" — natural, terapéutico, sereno.
    ========================================================================== */
 
@@ -117,12 +117,14 @@
 
     /* --- Botones --- */
     .btn {
-        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap;
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap cursor-pointer;
     }
 
     .btn-primary {
-        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap bg-sage-600 text-white px-7 py-3;
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap cursor-pointer bg-sage-600 text-white px-7 py-3;
         box-shadow: 0 10px 24px -8px rgba(41, 102, 146, 0.5);
+        overflow: hidden;
+        position: relative;
     }
 
     .btn-primary:hover {
@@ -133,9 +135,11 @@
 
     /* Variante con gradiente del botón primario, para CTAs destacados puntuales */
     .btn-primary-gradient {
-        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap text-white px-7 py-3;
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap cursor-pointer text-white px-7 py-3;
         background: linear-gradient(135deg, var(--color-sage-500) 0%, var(--color-sage-700) 100%);
         box-shadow: 0 10px 24px -8px rgba(41, 102, 146, 0.5);
+        overflow: hidden;
+        position: relative;
     }
 
     .btn-primary-gradient:hover {
@@ -145,14 +149,41 @@
     }
 
     .btn-accent {
-        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap text-white px-7 py-3;
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 whitespace-nowrap cursor-pointer text-white px-7 py-3;
         background: linear-gradient(135deg, #c9a98c 0%, #a67e5c 100%);
         box-shadow: 0 10px 24px -8px rgba(166, 126, 92, 0.5);
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
     }
 
     .btn-accent:hover {
         transform: translateY(-2px);
         filter: brightness(1.04);
+    }
+
+    .btn-primary,
+    .btn-primary-gradient,
+    .btn-accent {
+        isolation: isolate;
+    }
+
+    .btn-primary::after,
+    .btn-primary-gradient::after,
+    .btn-accent::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .35) 50%, transparent 70%);
+        transform: translateX(-130%);
+        transition: transform .8s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .btn-primary:hover::after,
+    .btn-primary-gradient:hover::after,
+    .btn-accent:hover::after {
+        transform: translateX(130%);
     }
 
     .btn-outline {
@@ -332,32 +363,6 @@
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
-    }
-
-    /* --- Brillo barrido (shimmer) al pasar el mouse sobre botones --- */
-    .btn-primary,
-    .btn-primary-gradient,
-    .btn-accent {
-        position: relative;
-        isolation: isolate;
-    }
-
-    .btn-primary::after,
-    .btn-primary-gradient::after,
-    .btn-accent::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .4) 50%, transparent 70%);
-        transform: translateX(-130%);
-        transition: transform .8s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    .btn-primary:hover::after,
-    .btn-primary-gradient:hover::after,
-    .btn-accent:hover::after {
-        transform: translateX(130%);
     }
 
 }

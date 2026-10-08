@@ -7,6 +7,8 @@ use App\Http\Requests\StoreLoginRequest;
 use App\Services\Auth\AuthService;
 use App\Models\Usuario;
 use App\Models\Rol;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -73,6 +75,11 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
 
+        $userCandidate = Usuario::where('email', $request->input('email'))->first();
+        if ($userCandidate?->isPatient()) {
+            $remember = false;
+        }
+
         if ($this->authService->attemptLogin($credentials, $remember)) {
             $user = $request->user();
 
@@ -85,17 +92,22 @@ class AuthController extends Controller
                     ->onlyInput('email');
             }
 
+            // Ensure patient sessions are not persistent when browser closes
+            if ($user->isPatient()) {
+                $remember = false;
+            }
+
             $request->session()->regenerate();
 
-            // Redirigir según el rol del usuario utilizando los helpers del modelo
+            // Redirigir al dashboard principal según el rol del usuario
             if ($user->isAdmin()) {
-                return redirect()->intended(route('admin.dashboard'));
+                return redirect()->route('admin.dashboard');
             } elseif ($user->isDoctor()) {
-                return redirect()->intended(route('doctor.dashboard'));
+                return redirect()->route('doctor.dashboard');
             } elseif ($user->isReceptionist()) {
-                return redirect()->intended(route('receptionist.dashboard'));
+                return redirect()->route('receptionist.dashboard');
             } else {
-                return redirect()->intended(route('portal.index'));
+                return redirect()->route('portal.index');
             }
         }
 
@@ -107,6 +119,41 @@ class AuthController extends Controller
     /**
      * Cierra la sesión del usuario.
      */
+    public function profile(Request $request): View
+    {
+        $usuario = $request->user();
+
+        return view('profile', compact('usuario'));
+    }
+
+    public function updateProfile(Request $request): RedirectResponse
+    {
+        $usuario = $request->user();
+
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', 'unique:usuarios,email,' . $usuario->id],
+            'telefono' => 'nullable|string|max:20',
+            'password' => 'nullable|string|min:8|confirmed',
+        ], [
+            'email.unique' => 'Este correo ya está registrado por otro usuario.',
+            'password.confirmed' => 'La confirmación de la contraseña no coincide.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+        ]);
+
+        $usuario->nombre = $validated['nombre'];
+        $usuario->email = $validated['email'];
+        $usuario->telefono = $validated['telefono'] ?? null;
+
+        if (!empty($validated['password'])) {
+            $usuario->password = $validated['password'];
+        }
+
+        $usuario->save();
+
+        return redirect()->route('profile')->with('success', 'Tu perfil se actualizó correctamente.');
+    }
+
     public function logout(Request $request): RedirectResponse
     {
         $this->authService->logout($request);

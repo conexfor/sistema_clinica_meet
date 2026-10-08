@@ -26,7 +26,7 @@
                     </div>
                     <div>
                         <label class="label">Correo electrónico</label>
-                        <input type="email" name="email" value="{{ old('email') }}" required placeholder="doctor@sia.com" class="field">
+                        <input type="email" name="email" value="{{ old('email') }}" required placeholder="doctor@conexfor.com" class="field">
                         @error('email') <p class="text-sand-700 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
                     </div>
                 </div>

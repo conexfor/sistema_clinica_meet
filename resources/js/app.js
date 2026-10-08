@@ -104,3 +104,36 @@ window.addEventListener('pageshow', function (event) {
         });
     });
 });
+
+/**
+ * Toggle de visibilidad de contraseñas para inputs con `data-password-toggle`.
+ */
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-password-toggle]');
+    if (!btn) return;
+    const selector = btn.getAttribute('data-password-toggle');
+    const input = document.querySelector(selector);
+    if (!input) return;
+
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    btn.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+
+    if (isPassword) {
+        btn.classList.add('text-sage-700');
+    } else {
+        btn.classList.remove('text-sage-700');
+    }
+
+    const showIcon = btn.querySelector('.password-show-icon');
+    const hideIcon = btn.querySelector('.password-hide-icon');
+    if (showIcon && hideIcon) {
+        if (isPassword) {
+            showIcon.classList.add('hidden');
+            hideIcon.classList.remove('hidden');
+        } else {
+            showIcon.classList.remove('hidden');
+            hideIcon.classList.add('hidden');
+        }
+    }
+});

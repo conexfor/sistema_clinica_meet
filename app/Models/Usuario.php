@@ -97,6 +97,19 @@ class Usuario extends Authenticatable
     public function isReceptionist(): bool { return $this->rol && $this->rol->nombre === self::ROL_RECEPTIONIST; }
     public function isPatient(): bool { return $this->rol && $this->rol->nombre === self::ROL_PATIENT; }
 
+    public function hasAction(string $action): bool
+    {
+        // Always load the latest role from database to avoid stale relation data
+        $rol = \App\Models\Rol::find($this->rol_id);
+        return $rol ? $rol->hasAction($action) : false;
+    }
+
+    public function hasAnyAction(array $actions): bool
+    {
+        $rol = \App\Models\Rol::find($this->rol_id);
+        return $rol ? $rol->hasAnyAction($actions) : false;
+    }
+
     /**
      * Relación con el rol del usuario
      */

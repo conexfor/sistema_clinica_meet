@@ -142,7 +142,7 @@
                             @endforeach
                         </div>
                     @empty
-                        <div class="text-center py-10"><p class="text-ink-500 text-sm italic">No tienes bloques configurados.</p></div>
+                        <div class="text-center py-10"><p class="text-ink-500 text-sm italic">No tienes bloques configurados.</p></div><
                     @endforelse
                 </div>
             </div>

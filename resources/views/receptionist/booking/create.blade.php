@@ -45,6 +45,7 @@
         </div>
     </div>
 
+    @php $showNewPatientModal = $errors->hasAny(['nombre', 'email', 'telefono', 'password']); @endphp
     <form action="{{ route('receptionist.booking.store') }}" method="POST" id="bookingForm">
         @csrf
 
@@ -91,35 +92,101 @@
                     </div>
 
                     <div class="mt-4 flex items-center justify-between gap-4 flex-wrap">
-                        <button type="button" id="showNewPatient" class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-sage-600 hover:text-sage-800 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/></svg>
-                            Registrar nuevo paciente
-                        </button>
+                        @if(auth()->user()->hasAction('register_patients'))
+                            <button type="button" id="showNewPatient" class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-sage-600 hover:text-sage-800 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/></svg>
+                                Registrar nuevo paciente
+                            </button>
+                        @else
+                            <p class="text-xs text-ink-500 dark:text-sage-300">Solo puedes agendar citas para pacientes existentes.</p>
+                        @endif
                         <button type="button" id="clearPatient" class="hidden inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-sand-600 hover:text-sand-800 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
                             Limpiar
                         </button>
                     </div>
 
-                    <input type="hidden" name="paciente_id" id="paciente_id">
+                    <input type="hidden" name="paciente_id" id="paciente_id" value="{{ old('paciente_id') }}">
+                    <input type="hidden" name="patient_type" id="patient_type" value="{{ old('patient_type', 'simple') }}">
 
-                    <div class="space-y-5 mt-6 hidden" id="nuevo-paciente-fields">
-                        <div class="h-px bg-cream-300"></div>
-                        <div>
-                            <label class="label">Nombre completo</label>
-                            <input type="text" name="nombre" id="nombre" placeholder="Ej: Nicolás Rojas" class="field">
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="label">Email</label>
-                                <input type="email" name="email" id="email" placeholder="paciente@mail.com" class="field">
+                    @if(auth()->user()->hasAction('register_patients'))
+                    <div id="newPatientModal" class="fixed inset-0 z-50 {{ $showNewPatientModal ? '' : 'hidden' }} flex items-center justify-center px-4 py-6">
+                        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"></div>
+                        <div class="relative w-full max-w-2xl overflow-hidden rounded-[2rem] bg-white border border-slate-200 text-sage-900 shadow-2xl dark:bg-slate-950 dark:border-slate-700 dark:text-cream-100">
+                            <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-700">
+                                <div>
+                                    <h3 class="font-serif text-2xl">Registrar nuevo paciente</h3>
+                                    <p class="text-sm text-ink-500 dark:text-sage-400 mt-1">Registra una cuenta de paciente sin salir del flujo de reserva.</p>
+                                </div>
+                                <button type="button" id="closeNewPatientModal" class="rounded-full p-2 text-sand-600 hover:bg-sage-100 hover:text-sand-800 dark:hover:bg-sage-900">
+                                    <span class="sr-only">Cerrar</span>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
                             </div>
-                            <div>
-                                <label class="label">Teléfono</label>
-                                <input type="text" name="telefono" id="telefono" placeholder="Ej: 999 888 777" class="field">
+
+                            <div id="newPatientErrors" class="space-y-2 px-6 text-sm text-sand-700"></div>
+                            <div class="space-y-5 px-6 py-6">
+                                <div>
+                                    <label class="label">Tipo de paciente</label>
+                                    <div class="flex flex-wrap gap-3">
+                                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="patient_type_option" id="patient_type_simple" value="simple" class="form-radio" {{ old('patient_type', 'simple') === 'simple' ? 'checked' : '' }}>
+                                            <span class="text-sm font-semibold">Paciente simple</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="patient_type_option" id="patient_type_account" value="account" class="form-radio" {{ old('patient_type') === 'account' ? 'checked' : '' }}>
+                                            <span class="text-sm font-semibold">Crear cuenta</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="label">Nombre completo</label>
+                                    <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" placeholder="Ej: Nicolás Rojas" class="field">
+                                    @error('nombre') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label">Teléfono</label>
+                                    <input type="text" name="telefono" id="telefono" value="{{ old('telefono') }}" placeholder="Ej: 999 888 777" class="field">
+                                    @error('telefono') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
+                                </div>
+                                <div id="account-fields" class="space-y-5 {{ old('patient_type', 'simple') === 'account' ? '' : 'hidden' }}">
+                                    <div>
+                                        <label class="label">Email</label>
+                                        <input type="email" name="email" id="email" value="{{ old('email') }}" placeholder="paciente@mail.com" class="field">
+                                        @error('email') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="label">Contraseña</label>
+                                        <div class="relative">
+                                            <input type="password" name="password" id="newpatient_password" placeholder="Crea una contraseña segura" class="field pr-12">
+                                            <button type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600" data-password-toggle="#newpatient_password" aria-label="Mostrar contraseña">
+                                                <svg class="password-show-icon w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                <svg class="password-hide-icon hidden w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.88 9.88a2.25 2.25 0 113.182 3.182"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            </button>
+                                        </div>
+                                        @error('password') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="label">Confirmar contraseña</label>
+                                        <div class="relative">
+                                            <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Repite la contraseña" class="field pr-12">
+                                            <button type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600" data-password-toggle="#password_confirmation" aria-label="Mostrar contraseña">
+                                                <svg class="password-show-icon w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                <svg class="password-hide-icon hidden w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.88 9.88a2.25 2.25 0 113.182 3.182"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            </button>
+                                        </div>
+                                        @error('password_confirmation') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-cream-200 dark:border-sage-800">
+                                    <button type="button" id="cancelNewPatientModal" class="btn-outline">Cancelar</button>
+                                    <button type="button" id="saveNewPatient" class="btn-primary">Registrar paciente</button>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    @endif
+                    <div class="space-y-5 mt-6 hidden" id="nuevo-paciente-fields"></div>
                 </div>
 
                 <!-- 2: Servicio -->
@@ -139,20 +206,22 @@
                                 <select name="servicio_id" id="servicio_id" required class="field appearance-none cursor-pointer !pr-10">
                                     <option value="">Elegir servicio...</option>
                                     @foreach($servicios as $srv)
-                                        <option value="{{ $srv->id }}" data-modalidades="{{ $srv->modalidades->pluck('id')->join(',') }}" data-precio="{{ $srv->precio }}" data-nombre="{{ $srv->nombre }}">
+                                        <option value="{{ $srv->id }}" data-modalidades="{{ $srv->modalidades->pluck('id')->join(',') }}" data-precio="{{ $srv->precio }}" data-nombre="{{ $srv->nombre }}" {{ old('servicio_id') == $srv->id ? 'selected' : '' }}>
                                             {{ $srv->nombre }} · S/ {{ number_format($srv->precio, 0) }}
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
+                            @error('servicio_id') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="label">Cantidad de sesiones</label>
                             <div class="flex items-center gap-2">
                                 <button type="button" id="sesMinus" class="stepper-btn" aria-label="Menos">−</button>
-                                <input type="number" name="cantidad_sesiones" id="cantidad_sesiones" value="1" min="1" class="field text-center font-bold !text-lg">
+                                <input type="number" name="cantidad_sesiones" id="cantidad_sesiones" value="{{ old('cantidad_sesiones', 1) }}" min="1" class="field text-center font-bold !text-lg">
                                 <button type="button" id="sesPlus" class="stepper-btn" aria-label="Más">+</button>
                             </div>
+                            @error('cantidad_sesiones') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="label">Modalidad</label>
@@ -160,10 +229,11 @@
                                 <select name="modalidad_id" id="modalidad_id" required class="field appearance-none cursor-pointer !pr-10">
                                     <option value="">Elegir modalidad...</option>
                                     @foreach($modalidades as $mod)
-                                        <option value="{{ $mod->id }}" class="modalidad-option">{{ $mod->nombre }}</option>
+                                        <option value="{{ $mod->id }}" class="modalidad-option" {{ old('modalidad_id') == $mod->id ? 'selected' : '' }}>{{ $mod->nombre }}</option>
                                     @endforeach
                                 </select>
                             </div>
+                            @error('modalidad_id') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
@@ -186,10 +256,11 @@
                                     <option value="">Primero elige un servicio...</option>
                                 </select>
                             </div>
+                            @error('especialista_id') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
                         </div>
                         <div class="sm:col-span-2">
                             <label class="label">Fecha de atención</label>
-                            <input type="hidden" id="fetchAvailabilityDate" name="fecha_raw">
+                            <input type="hidden" id="fetchAvailabilityDate" name="fecha_raw" value="{{ old('fecha_raw') }}">
                             <div class="rounded-2xl border border-cream-300 dark:border-sage-700 bg-cream-50 dark:bg-sage-950 p-3 w-full max-w-[17rem]">
                                 <!-- Estado inicial: aún no hay especialista -->
                                 <div id="calendarPlaceholder" class="py-6 text-center">
@@ -231,6 +302,7 @@
                                     <option value="">Elige fecha y profesional...</option>
                                 </select>
                             </div>
+                            @error('disponibilidad_id') <p class="mt-2 text-xs font-semibold text-sand-700">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
@@ -322,6 +394,8 @@
     const searchResults = document.getElementById('searchResults');
     const pacienteIdInput = document.getElementById('paciente_id');
     const clearPatientBtn = document.getElementById('clearPatient');
+    const csrfToken = document.querySelector('input[name="_token"]').value;
+    const newPatientErrors = document.getElementById('newPatientErrors');
 
     const serviceSelect = document.getElementById('servicio_id');
     const modalitySelect = document.getElementById('modalidad_id');
@@ -406,29 +480,142 @@
         searchResults.classList.add('hidden');
         patientSearch.value = p.nombre;
         clearPatientBtn.classList.remove('hidden');
-        document.getElementById('nuevo-paciente-fields').classList.remove('hidden');
         updateSummary();
     }
 
     const showNewPatientBtn = document.getElementById('showNewPatient');
-    const nuevoPacienteFields = document.getElementById('nuevo-paciente-fields');
+    const newPatientModal = document.getElementById('newPatientModal');
+    const closeNewPatientModal = document.getElementById('closeNewPatientModal');
+    const cancelNewPatientModal = document.getElementById('cancelNewPatientModal');
+    const saveNewPatientBtn = document.getElementById('saveNewPatient');
+    const accountFields = document.getElementById('account-fields');
+    const patientTypeHidden = document.getElementById('patient_type');
+    const patientTypeInputs = document.querySelectorAll('input[type="radio"][name="patient_type_option"]');
+
+    function setPatientType(type) {
+        patientTypeHidden.value = type;
+        if (type === 'account') {
+            accountFields.classList.remove('hidden');
+            document.getElementById('email').required = true;
+            document.getElementById('newpatient_password').required = true;
+            document.getElementById('password_confirmation').required = true;
+        } else {
+            accountFields.classList.add('hidden');
+            document.getElementById('email').required = false;
+            document.getElementById('newpatient_password').required = false;
+            document.getElementById('password_confirmation').required = false;
+        }
+    }
+
+    patientTypeInputs.forEach((input) => {
+        input.addEventListener('change', () => setPatientType(input.value));
+    });
+
+    const bookingForm = document.getElementById('bookingForm');
+    bookingForm.addEventListener('submit', () => {
+        const selectedType = document.querySelector('input[name="patient_type_option"]:checked');
+        if (selectedType) {
+            setPatientType(selectedType.value);
+        }
+    });
+
+    const initialPatientType = document.querySelector('input[name="patient_type_option"]:checked');
+    if (initialPatientType) {
+        setPatientType(initialPatientType.value);
+    }
+
+    function openNewPatientModal() {
+        newPatientModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        ['nombre', 'email', 'telefono', 'newpatient_password', 'password_confirmation'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('patient_type_simple').checked = true;
+        setPatientType('simple');
+        patientSearch.value = '';
+        nombreInput.focus();
+    }
+
+    function closeNewPatientModalDialog() {
+        newPatientModal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        updateSummary();
+    }
 
     showNewPatientBtn.onclick = () => {
         pacienteIdInput.value = '';
-        ['nombre', 'email', 'telefono'].forEach(id => document.getElementById(id).value = '');
-        patientSearch.value = '';
-        nuevoPacienteFields.classList.remove('hidden');
         clearPatientBtn.classList.remove('hidden');
-        nombreInput.focus();
-        updateSummary();
+        openNewPatientModal();
     };
+
+    closeNewPatientModal.onclick = closeNewPatientModalDialog;
+    cancelNewPatientModal.onclick = closeNewPatientModalDialog;
+
+    saveNewPatientBtn.onclick = async () => {
+        if (!newPatientErrors) return;
+        newPatientErrors.innerHTML = '';
+
+        const selectedType = document.querySelector('input[name="patient_type_option"]:checked');
+        const payload = {
+            patient_type: selectedType ? selectedType.value : 'simple',
+            nombre: document.getElementById('nombre').value.trim(),
+            telefono: document.getElementById('telefono').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            password: document.getElementById('newpatient_password').value,
+            password_confirmation: document.getElementById('password_confirmation').value,
+        };
+
+        try {
+            const formData = new FormData();
+            formData.append('patient_type', payload.patient_type);
+            formData.append('nombre', payload.nombre);
+            formData.append('telefono', payload.telefono);
+            formData.append('email', payload.email);
+            formData.append('password', payload.password);
+            formData.append('password_confirmation', payload.password_confirmation);
+
+            const response = await fetch('{{ route('receptionist.patients.store') }}', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'same-origin',
+                body: formData,
+            });
+
+            const contentType = response.headers.get('content-type') || '';
+            let data = null;
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(text || 'Respuesta inesperada del servidor');
+            }
+
+            if (!response.ok) {
+                const errors = data.errors || { general: [data.message || 'Error al guardar el paciente.'] };
+                newPatientErrors.innerHTML = Object.values(errors).flat().map(err => `<p>• ${err}</p>`).join('');
+                return;
+            }
+
+            pacienteIdInput.value = data.id;
+            document.getElementById('nombre').value = data.nombre || payload.nombre;
+            document.getElementById('telefono').value = data.telefono || payload.telefono;
+            document.getElementById('email').value = data.email || payload.email;
+            patientSearch.value = data.nombre || payload.nombre;
+            clearPatientBtn.classList.remove('hidden');
+            closeNewPatientModalDialog();
+        } catch (error) {
+            console.error(error);
+            newPatientErrors.innerHTML = `<p>• No se pudo guardar el paciente: ${error.message}</p>`;
+        }
+    };
+
     clearPatientBtn.onclick = () => {
         pacienteIdInput.value = '';
         ['nombre', 'email', 'telefono'].forEach(id => document.getElementById(id).value = '');
         patientSearch.value = '';
         clearPatientBtn.classList.add('hidden');
-        nuevoPacienteFields.classList.add('hidden');
-        updateSummary();
+        closeNewPatientModalDialog();
     };
     nombreInput.addEventListener('input', updateSummary);
 
@@ -472,14 +659,23 @@
             .then(res => res.json())
             .then(data => {
                 specialistSelect.innerHTML = '<option value="">Elegir profesional...</option>';
-                if (data.length === 0) specialistSelect.innerHTML = '<option value="">Sin especialistas disponibles este mes</option>';
-                data.forEach(esp => {
-                    const opt = document.createElement('option');
-                    opt.value = esp.id;
-                    opt.textContent = `${esp.nombre} - ${esp.especialidad}`;
-                    specialistSelect.appendChild(opt);
-                });
+                if (data.length === 0) {
+                    specialistSelect.innerHTML = '<option value="">Sin especialistas con horarios disponibles en los próximos 60 días</option>';
+                } else {
+                    data.forEach(esp => {
+                        const opt = document.createElement('option');
+                        opt.value = esp.id;
+                        opt.textContent = `${esp.nombre} - ${esp.especialidad}`;
+                        specialistSelect.appendChild(opt);
+                    });
+                }
+                if (oldEspecialistaId) {
+                    specialistSelect.value = oldEspecialistaId;
+                }
                 updateSummary();
+                if (specialistSelect.value && dateInput.value) {
+                    updateAvailability();
+                }
             })
             .catch(err => { console.error(err); specialistSelect.innerHTML = '<option value="">Error al cargar especialistas</option>'; });
     }
@@ -506,7 +702,12 @@
                         opt.textContent = `${d.hora_inicio} — Sesión de ${d.duracion_min || 60}min`;
                         dispSelect.appendChild(opt);
                     });
-                } else { dispSelect.innerHTML = '<option value="">No hay horarios para este día</option>'; }
+                    if (oldDisponibilidadId) {
+                        dispSelect.value = oldDisponibilidadId;
+                    }
+                } else {
+                    dispSelect.innerHTML = '<option value="">No hay horarios para este día</option>';
+                }
                 updateSummary();
             });
     }
@@ -632,6 +833,40 @@
     serviceSelect.addEventListener('change', resetCalendar);
     sessionsInput.addEventListener('change', resetCalendar);
 
-    updateSummary();
+    const oldServicioId = @json(old('servicio_id'));
+    const oldModalidadId = @json(old('modalidad_id'));
+    const oldEspecialistaId = @json(old('especialista_id'));
+    const oldFechaRaw = @json(old('fecha_raw'));
+    const oldDisponibilidadId = @json(old('disponibilidad_id'));
+    const oldCantidadSesiones = @json(old('cantidad_sesiones', 1));
+
+    if (oldCantidadSesiones) {
+        sessionsInput.value = oldCantidadSesiones;
+    }
+    if (oldModalidadId) {
+        modalitySelect.value = oldModalidadId;
+    }
+    if (oldFechaRaw) {
+        dateInput.value = oldFechaRaw;
+    }
+    if (oldServicioId) {
+        serviceSelect.value = oldServicioId;
+    }
+
+    function restoreState() {
+        if (!serviceSelect.value) {
+            updateSummary();
+            return;
+        }
+
+        updateSpecialists();
+    }
+
+    restoreState();
+
+    @if($showNewPatientModal)
+        document.body.classList.add('overflow-hidden');
+        document.getElementById('nombre').focus();
+    @endif
 </script>
 @endpush

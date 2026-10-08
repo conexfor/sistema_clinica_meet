@@ -50,7 +50,7 @@
                             <td class="px-6 py-4 text-right">
                                 @if($esYo)
                                     <span class="text-xs text-ink-400">—</span>
-                                @else
+                                @elseif(auth()->user()->hasAction('usuarios_toggle_estado'))
                                     <form action="{{ route('admin.usuarios.estado', $u->id) }}" method="POST" class="inline"
                                           data-confirm="¿Seguro que deseas {{ $u->esta_activo ? 'DESACTIVAR' : 'ACTIVAR' }} la cuenta de {{ $u->nombre }}?{{ $u->esta_activo ? ' No podrá iniciar sesión.' : '' }}"
                                           data-confirm-ok="{{ $u->esta_activo ? 'Desactivar' : 'Activar' }}"
@@ -62,6 +62,8 @@
                                             <button type="submit" class="px-4 py-2 text-xs font-bold text-sage-600 hover:bg-sage-50 rounded-xl transition-colors">Activar</button>
                                         @endif
                                     </form>
+                                @else
+                                    <span class="text-xs text-ink-400">—</span>
                                 @endif
                             </td>
                         </tr>

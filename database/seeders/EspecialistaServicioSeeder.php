@@ -28,7 +28,7 @@ class EspecialistaServicioSeeder extends Seeder
     private array $profesionales = [
         [
             'nombre'       => 'Dra. Elena Salazar',
-            'email'        => 'doctor@sia.com',
+            'email'        => 'doctor@conexfor.com',
             'telefono'     => '999000003',
             'especialidad' => 'Psicología Clínica',
             'biografia'    => 'Especialista en ansiedad, estado de ánimo y acompañamiento terapéutico.',
@@ -37,7 +37,7 @@ class EspecialistaServicioSeeder extends Seeder
         ],
         [
             'nombre'       => 'Dr. Martín Ríos',
-            'email'        => 'martin.rios@sia.com',
+            'email'        => 'martin.rios@conexfor.com',
             'telefono'     => '999000010',
             'especialidad' => 'Terapia Cognitivo-Conductual',
             'biografia'    => 'Psicólogo especializado en manejo del estrés, fobias y reestructuración de pensamientos.',
@@ -46,7 +46,7 @@ class EspecialistaServicioSeeder extends Seeder
         ],
         [
             'nombre'       => 'Lucía Fernández',
-            'email'        => 'lucia.fernandez@sia.com',
+            'email'        => 'lucia.fernandez@conexfor.com',
             'telefono'     => '999000011',
             'especialidad' => 'Instructora de Yoga y Meditación',
             'biografia'    => 'Guía de yoga restaurativo y meditación con enfoque en relajación y bienestar.',
@@ -55,7 +55,7 @@ class EspecialistaServicioSeeder extends Seeder
         ],
         [
             'nombre'       => 'Carlos Mendoza',
-            'email'        => 'carlos.mendoza@sia.com',
+            'email'        => 'carlos.mendoza@conexfor.com',
             'telefono'     => '999000012',
             'especialidad' => 'Masoterapeuta',
             'biografia'    => 'Especialista en masaje descontracturante y relajante para liberar tensión muscular.',
